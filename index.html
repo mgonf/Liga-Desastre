@@ -75,6 +75,11 @@ details.mas[open] summary{margin-bottom:10px}
 .des-t{margin:0 0 8px;font-size:13px;color:var(--muted);line-height:1.4}
 .des-yt{margin-top:auto;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none}
 .des-yt:hover{text-decoration:underline}
+.modos{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px;margin-top:10px}
+.modo{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.modo.actual{border:2px solid var(--ink)}
+.modo-t{font-weight:700;margin:0 0 6px}
+.modo ul{margin:0;padding-left:18px}.modo li{margin-bottom:4px}
 .des-grid-wrap{max-width:1000px;margin:40px auto 0}
 .des-grid-wrap .des-cab{margin-bottom:12px}
 .des-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
@@ -488,6 +493,12 @@ Object.assign(EN, {
 "Para jugar necesitas una liga. Crea la tuya y pasa el código a tus amigos, o únete con el código que te hayan dado.":"To play you need a league. Create yours and share the code with your friends, or join with the code you were given.",
 "Más opciones":"More options","Podrás cambiar estas reglas después, menos el modo exclusivo.":"You can change these rules later, except exclusive mode.",
 "Unirme a una liga":"Join a league","Te lo pasa quien creó la liga. Tiene la forma DSTR- y cuatro letras o números.":"The league creator gives it to you. It looks like DSTR- plus four letters or numbers.",
+"Modos de liga":"League modes","Quien crea la liga elige uno de estos dos modos. Después no se puede cambiar.":"Whoever creates the league picks one of these two modes. It can't be changed later.",
+"tu liga":"your league","Varios equipos pueden tener al mismo jugador.":"Several teams can have the same player.","Tu equipo se mantiene de una jornada a otra.":"Your team carries over from one matchday to the next.",
+"Si no tocas nada, juegas con la alineación de la jornada anterior.":"If you change nothing, you play with last matchday's line-up.",
+"Cada jugador solo puede estar en un equipo de la liga: se lo queda el primero que guarda su alineación con él.":"Each player can only be in one team in the league: the first to save a line-up with him keeps him.",
+"Cada jornada los equipos empiezan vacíos y hay que montarlos de nuevo antes del primer partido.":"Every matchday teams start empty and must be rebuilt before the first match.",
+"No hay límite de cambios.":"There's no limit on changes.","Quien no guarde alineación suma −88, como si sus 11 jugadores no hubieran jugado.":"Anyone who doesn't save a line-up scores −88, as if all 11 players didn't play.",
 "Momentos desastre":"Disaster moments","· así se juega aquí":"· that's how we play here","Así se juega aquí.":"That's how we play here.","vacía":"empty",
 "Falla el penalti decisivo de la final del Mundial y lo manda por encima del larguero.":"Misses the deciding penalty of the World Cup final, blasting it over the bar.",
 "Dos errores clamorosos en la final de la Champions de Kiev ante el Real Madrid.":"Two howlers in the Champions League final in Kyiv against Real Madrid.",
@@ -511,6 +522,8 @@ Object.assign(EN, {
 "Ya has entrado":"You're logged in","admin":"admin","exclusiva":"exclusive","Ninguno.":"None."
 });
 EN_RE.push(
+ [/^Solo puedes hacer los cambios por jornada que marque la liga(?: \(en la tuya, (\d+)\))?\.$/, (m,n)=>"You can only make the changes per matchday the league allows"+(n?` (${n} in yours)`:"")+"."],
+ [/^Tu liga \((.+)\) está en modo (normal|jugadores exclusivos)\.$/, (m,a,b)=>`Your league (${a}) is in ${b==="normal"?"normal":"exclusive players"} mode.`],
  [/^Casi está\. Te hemos mandado un correo a (.+)\. Pulsa el enlace que trae y ya podrás entrar\. Si no lo ves, mira en spam\.$/, "Almost done. We've sent an email to $1. Click its link and you can log in. If you don't see it, check spam."],
  [/^Gasto mínimo (.+) · equipo nuevo cada jornada · multiplicador 1 \+ precio \/ (.+)$/, "Minimum spend $1 · new team every matchday · multiplier 1 + price / $2"],
  [/^Gasto mínimo (.+) · (\d+) cambios por jornada · multiplicador 1 \+ precio \/ (.+)$/, "Minimum spend $1 · $2 changes per matchday · multiplier 1 + price / $3"],
@@ -1025,7 +1038,14 @@ function vReglas(el){
   ${fila("Gol en propia","+6")}${fila("Comete penalti","+5")}${fila("Falla penalti","+6")}
   ${fila("Amarilla","+2")}${fila("Doble amarilla","+5")}${fila("Roja directa","+7")}</tbody></table></div></div>
 
-  ${S.config.exclusivo?`<div class="panel" style="margin-top:16px"><h3>Jugadores exclusivos</h3><p class="small">En esta liga cada jugador solo puede estar en un equipo: se lo queda el primero que guarda su alineación con él. Cada jornada los equipos empiezan vacíos y hay que volver a montarlos antes de que empiece el primer partido. Quien no guarde alineación suma −88, como si sus 11 jugadores no hubieran jugado.</p></div>`:""}
+  <div class="panel" style="margin-top:16px"><h3>Modos de liga</h3>
+  <p class="small">Quien crea la liga elige uno de estos dos modos. Después no se puede cambiar.${liga()?` <strong>Tu liga (${esc(liga().nombre)}) está en modo ${S.config.exclusivo?"jugadores exclusivos":"normal"}.</strong>`:""}</p>
+  <div class="modos">
+    <div class="modo${liga()&&!S.config.exclusivo?" actual":""}"><p class="modo-t">Normal${liga()&&!S.config.exclusivo?' <span class="chip ok">tu liga</span>':""}</p>
+      <ul class="small"><li>Varios equipos pueden tener al mismo jugador.</li><li>Tu equipo se mantiene de una jornada a otra.</li><li>Solo puedes hacer los cambios por jornada que marque la liga${liga()&&!S.config.exclusivo?` (en la tuya, ${S.config.max_cambios})`:""}.</li><li>Si no tocas nada, juegas con la alineación de la jornada anterior.</li></ul></div>
+    <div class="modo${liga()&&S.config.exclusivo?" actual":""}"><p class="modo-t">Jugadores exclusivos${liga()&&S.config.exclusivo?' <span class="chip ok">tu liga</span>':""}</p>
+      <ul class="small"><li>Cada jugador solo puede estar en un equipo de la liga: se lo queda el primero que guarda su alineación con él.</li><li>Cada jornada los equipos empiezan vacíos y hay que montarlos de nuevo antes del primer partido.</li><li>No hay límite de cambios.</li><li>Quien no guarde alineación suma −88, como si sus 11 jugadores no hubieran jugado.</li></ul></div>
+  </div></div>
   <div class="panel" style="margin-top:16px"><h3>Rating</h3>
   <p class="small">El rating es la nota que SofaScore pone a cada jugador en cada partido, de 3 a 10. Un 6,5 es un partido normal: no suma ni resta. Por cada punto por debajo de 6,5 sumas 3; por cada punto por encima, restas 3.</p>
   <table class="tabla-ej"><thead><tr><th>Rating</th><th>Cuenta</th><th class="num">Puntos</th></tr></thead><tbody>
