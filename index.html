@@ -225,8 +225,12 @@ body.con-modal{overflow:hidden}
 .tabla-ej{margin:6px 0 10px;font-size:13px}
 .tabla-ej td,.tabla-ej th{padding:6px 8px}
 .cols-ej{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px 24px}
-.lang{background:transparent;color:var(--ink);border:1px solid var(--line);padding:4px 10px;font-size:13px;border-radius:999px}
-.lang:hover{border-color:var(--ink)}
+.barra-idioma{display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin:-8px 0 8px}
+.barra-idioma .lab{margin-right:2px}
+.idi{display:inline-flex;align-items:center;gap:6px;background:transparent;color:var(--muted);border:1px solid var(--line);padding:3px 9px;font-size:12px;font-weight:700;border-radius:999px}
+.idi:hover{color:var(--ink);border-color:var(--ink)}
+.idi[aria-pressed="true"]{color:var(--ink);border-color:var(--ink);background:var(--surface)}
+.idi svg{width:20px;height:13px;border-radius:2px;display:block;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
 .derecha{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:flex-end}
 @media (prefers-reduced-motion:no-preference){nav.tabs a{transition:background .15s,color .15s}}
 
@@ -652,6 +656,9 @@ function clasificacion(){
 function cambios(a,b){const s=new Set(a); return b.filter(x=>!s.has(x)).length}
 
 /* ---------- marco ---------- */
+const BANDERA = {
+  es:`<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#c60b1e"/><rect y="5" width="30" height="10" fill="#ffc400"/></svg>`,
+  en:`<svg viewBox="0 0 60 30" aria-hidden="true"><clipPath id="uk-c"><path d="M30,15h30v15zv15h-30zh-30v-15zv-15h30z"/></clipPath><rect width="60" height="30" fill="#012169"/><path d="M0,0 60,30M60,0 0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 60,30M60,0 0,30" clip-path="url(#uk-c)" stroke="#c8102e" stroke-width="4"/><path d="M30,0v30M0,15h60" stroke="#fff" stroke-width="10"/><path d="M30,0v30M0,15h60" stroke="#c8102e" stroke-width="6"/></svg>`};
 const CON_LIGA = ["clasificacion","equipos","fichar","jornadas","ligas"];
 const enLiga = () => !!(user && liga());
 function ruta(){ let h=location.hash.slice(1);
@@ -670,16 +677,19 @@ function render(){
   const selLiga = misLigas.length
     ? `<div class="sel-liga"><label for="ligasel">Liga</label><select id="ligasel">${misLigas.map(l=>`<option value="${esc(l.id)}"${l.id===ligaId?" selected":""}>${esc(l.nombre)}</option>`).join("")}</select></div>` : "";
   app.innerHTML=`${bannerDes("izq")}${bannerDes("der")}<div class="wrap">
+    <div class="barra-idioma" role="group" aria-label="Idioma / Language"><span class="lab">${LANG==="en"?"Language":"Idioma"}</span>
+      <button class="idi" data-lang="es" aria-pressed="${LANG!=="en"}" lang="es" title="Español">${BANDERA.es} ES</button>
+      <button class="idi" data-lang="en" aria-pressed="${LANG==="en"}" lang="en" title="English">${BANDERA.en} EN</button></div>
     <header class="top"><a class="marca" href="#inicio" aria-label="Liga Desastre, ir al inicio"><div class="cards" aria-hidden="true"><i></i><i></i></div>
       <div><h1>Liga Desastre</h1><p class="lema">Gasta a lo grande y gana con el equipo que peor juegue.</p></div></a>
       <div class="derecha"><nav class="tabs" aria-label="Secciones">${navs}</nav>
-        <div class="derecha-2">${selLiga}${sesion}<button class="lang" id="lang" aria-label="${LANG==="en"?"Cambiar a español":"Switch to English"}">${LANG==="en"?"ES":"EN"}</button></div></div></header>
+        <div class="derecha-2">${selLiga}${sesion}</div></div></header>
     ${!configurado?`<div class="aviso err"><strong>Falta configurar la conexión.</strong> Edita <code>config.js</code> y pon la dirección y la clave pública de tu proyecto de Supabase.</div>`:""}
     ${errorCarga?`<div class="aviso err">No se pudieron cargar los datos: ${esc(errorCarga)}. Recarga la página en un rato.</div>`:""}
     <main id="vista"></main>
     ${ruta()==="inicio"?"":`<div class="des-movil">${bannerDes("movil")}</div>`}
     <footer>Puntos Desastre: cuantos más, mejor. Precios en millones.${ultimaCarga?` · Datos cargados ${new Date(ultimaCarga).toLocaleTimeString(LOC(),{hour:"2-digit",minute:"2-digit"})}`:""}</footer></div>`;
-  document.getElementById("lang").addEventListener("click",()=>{LANG=LANG==="en"?"es":"en"; guardaLocal("ld_lang",LANG); document.documentElement.lang=LANG; render();});
+  document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",()=>{ if(LANG===b.dataset.lang) return; LANG=b.dataset.lang; guardaLocal("ld_lang",LANG); document.documentElement.lang=LANG; render();}));
   const s=document.getElementById("salir"); if(s) s.addEventListener("click",async()=>{await sb.auth.signOut(); location.hash="#clasificacion";});
   const ls=document.getElementById("ligasel"); if(ls) ls.addEventListener("change",e=>cambiarLiga(e.target.value));
   const v=document.getElementById("vista");
