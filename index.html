@@ -80,6 +80,13 @@ details.mas[open] summary{margin-bottom:10px}
 .modo.actual{border:2px solid var(--ink)}
 .modo-t{font-weight:700;margin:0 0 6px}
 .modo ul{margin:0;padding-left:18px}.modo li{margin-bottom:4px}
+fieldset.elige{border:0;padding:0;margin:4px 0 12px;display:grid;gap:8px}
+fieldset.elige legend{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;padding:0}
+.opc{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;cursor:pointer}
+.opc:has(input:checked){border:2px solid var(--ink);padding:9px 11px}
+.opc{text-transform:none;letter-spacing:normal;font-size:14px;font-weight:400;color:var(--ink)}
+.opc input{margin-top:3px;width:auto;flex:none}
+.opc strong{font-weight:700}.opc .small{font-weight:400;text-transform:none;letter-spacing:normal}.opc>span{display:flex;flex-direction:column;gap:2px}
 .des-grid-wrap{max-width:1000px;margin:40px auto 0}
 .des-grid-wrap .des-cab{margin-bottom:12px}
 .des-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
@@ -282,7 +289,16 @@ const CFG = window.LIGA_CONFIG || {};
 const configurado = !!(CFG.url && CFG.anonKey && !/PEGA_AQUI|XXXX/.test(CFG.url + CFG.anonKey));
 const sb = (configurado && window.supabase) ? window.supabase.createClient(CFG.url, CFG.anonKey) : null;
 
-const DEF_CONFIG = {minimo:375, max_cambios:2, divisor:25, exclusivo:false};
+const DEF_CONFIG = {minimo:375, max_cambios:2, divisor:25, exclusivo:false, puntuacion:"total"};
+// Modalidad Clásica: solo minutos, rating (x4) y resultado. Usa lo que calcula el script (tc/dc); si es una jornada antigua, lo rehace.
+function aClasica(p){
+  if(!p) return p;
+  if(p.tc!==undefined) return {...p, t:p.tc, d:p.dc};
+  const d=(p.d||[]).filter(([c])=>/^(No juega|No convocado|Menos de 30|Resultado)/.test(c)).map(x=>[...x]);
+  if(p.rating) d.splice(d.findIndex(([c])=>/^Menos de 30/.test(c))+1, 0, [`Rating ${(+p.rating).toFixed(1)}`, Math.round((6.5-p.rating)*4*100)/100]);
+  return {...p, t:Math.round(d.reduce((a,[,v])=>a+v,0)*100)/100, d};
+}
+const CLASICA = () => S.config.puntuacion==="clasica";
 const S = {config:{...DEF_CONFIG}, jugadores:[], jornadas:{}, cal:{}, equipos:[], propietarios:[], miembros:[]};
 let J = new Map();
 let user = null, esAdmin = false, miEquipoId = null, misLigas = [], ligaId = null;
@@ -339,7 +355,8 @@ async function cargar(){
     if(!misLigas.find(l=>l.id===ligaId)){ const g=leeLocal("ld_liga"); ligaId = (misLigas.find(l=>l.id===g)||misLigas[0]||{}).id || null; }
     const l = liga();
     if(l){
-      S.config = {minimo:l.minimo, max_cambios:l.max_cambios, divisor:l.divisor, exclusivo:!!l.exclusivo};
+      S.config = {minimo:l.minimo, max_cambios:l.max_cambios, divisor:l.divisor, exclusivo:!!l.exclusivo, puntuacion:l.puntuacion==="clasica"?"clasica":"total"};
+      if(CLASICA()) Object.values(S.jornadas).forEach(jr=>{ jr.puntos=Object.fromEntries(Object.entries(jr.puntos).map(([k,p])=>[k,aClasica(p)])); });
       const eq = await sb.from("equipos").select("*").eq("liga_id", l.id);
       if(eq.error) throw new Error(eq.error.message);
       const ids = (eq.data||[]).map(e=>e.id);
@@ -400,6 +417,7 @@ const EN = {
 "Un error que acaba en gol es un fallo del propio jugador (un mal pase atrás, un balón que se le escapa al portero…) que termina en gol del rival. Suma +5.":"An error leading to a goal is the player's own mistake (a bad back-pass, a ball that slips through the keeper's hands…) that ends in an opposition goal. It scores +5.",
 "Ejemplo: un delantero falla dos ocasiones claras y un penalti: 2 × 3 + 6 = +12, además de lo que sume por rating y resultado.":"Example: a striker misses two big chances and a penalty: 2 × 3 + 6 = +12, on top of whatever he scores for rating and result.",
 "El rating es la nota que SofaScore pone a cada jugador en cada partido, de 3 a 10. Un 6,5 es un partido normal: no suma ni resta. Por cada punto por debajo de 6,5 sumas 3; por cada punto por encima, restas 3.":"The rating is the score SofaScore gives each player in each match, from 3 to 10. A 6.5 is an average game: it neither adds nor subtracts. Every point below 6.5 adds 3; every point above it takes away 3.",
+"El rating es la nota que SofaScore pone a cada jugador en cada partido, de 3 a 10. Un 6,5 es un partido normal: no suma ni resta. Por cada punto por debajo de 6,5 sumas 4; por cada punto por encima, restas 4.":"The rating is the score SofaScore gives each player in each match, from 3 to 10. A 6.5 is an average game: it neither adds nor subtracts. Every point below 6.5 adds 4; every point above it takes away 4.",
 "Cuenta":"Calculation","5,0 (partido malo)":"5.0 (bad game)","6,0 (flojo)":"6.0 (poor)","6,5 (normal)":"6.5 (average)","7,5 (bueno)":"7.5 (good)","9,0 (partidazo)":"9.0 (outstanding)",
 "(6,5 − rating) × 3":"(6.5 − rating) × 3","(6,5 − 5,0) × 3":"(6.5 − 5.0) × 3","(6,5 − 6,0) × 3":"(6.5 − 6.0) × 3","(6,5 − 6,5) × 3":"(6.5 − 6.5) × 3","(6,5 − 7,5) × 3":"(6.5 − 7.5) × 3","(6,5 − 9,0) × 3":"(6.5 − 9.0) × 3",
 "Resultado del equipo":"Team result","Premia la":"It rewards","sorpresa":"surprise",
@@ -499,7 +517,7 @@ Object.assign(EN, {
 "Un fantasy de LaLiga al revés: ficha estrellas caras y suma puntos cuando juegan mal: fallan ocasiones, ven tarjetas o pierden siendo favoritos. Ojo: si no juegan, restan.":"A LaLiga fantasy game in reverse: sign expensive stars and score when they play badly: missed chances, cards or losing as favourites. Careful: if they don't play, they lose you points.",
 "Ya tengo cuenta":"I have an account","Ver cómo se puntúa":"See how scoring works","¿Empezamos?":"Shall we start?",
 "Para jugar necesitas una liga. Crea la tuya y pasa el código a tus amigos, o únete con el código que te hayan dado.":"To play you need a league. Create yours and share the code with your friends, or join with the code you were given.",
-"Más opciones":"More options","Podrás cambiar estas reglas después, menos el modo exclusivo.":"You can change these rules later, except exclusive mode.",
+"Más opciones":"More options","Podrás cambiar estas reglas y la puntuación después, menos el modo exclusivo.":"You can change these rules and the scoring later, except exclusive mode.",
 "Unirme a una liga":"Join a league","Te lo pasa quien creó la liga. Tiene la forma DSTR- y cuatro letras o números.":"The league creator gives it to you. It looks like DSTR- plus four letters or numbers.",
 "Modos de liga":"League modes","Quien crea la liga elige uno de estos dos modos. Después no se puede cambiar.":"Whoever creates the league picks one of these two modes. It can't be changed later.",
 "tu liga":"your league","Varios equipos pueden tener al mismo jugador.":"Several teams can have the same player.","Tu equipo se mantiene de una jornada a otra.":"Your team carries over from one matchday to the next.",
@@ -507,6 +525,19 @@ Object.assign(EN, {
 "Cada jugador solo puede estar en un equipo de la liga: se lo queda el primero que guarda su alineación con él.":"Each player can only be in one team in the league: the first to save a line-up with him keeps him.",
 "Cada jornada los equipos empiezan vacíos y hay que montarlos de nuevo antes del primer partido.":"Every matchday teams start empty and must be rebuilt before the first match.",
 "No hay límite de cambios.":"There's no limit on changes.","Quien no guarde alineación suma −88, como si sus 11 jugadores no hubieran jugado.":"Anyone who doesn't save a line-up scores −88, as if all 11 players didn't play.",
+"Puntuación":"Scoring","Desastre total":"Total disaster","Clásica":"Classic","clásica":"classic",
+"Nota, resultado, goles, tarjetas, penaltis, ocasiones falladas… Más emoción.":"Rating, result, goals, cards, penalties, missed chances… More drama.",
+"Solo la nota de SofaScore y el resultado. Más sencilla.":"Just the SofaScore rating and the result. Simpler.",
+"Si la cambias, se recalculan todas las jornadas con la nueva puntuación.":"If you change it, every matchday is recalculated with the new scoring.",
+"Resultado del equipo":"Team result","Puntuación clásica: nada más. Goles, tarjetas o penaltis ya influyen en la nota de SofaScore.":"Classic scoring: nothing else. Goals, cards and penalties already affect the SofaScore rating.",
+"Puntuación: Clásica o Desastre total":"Scoring: Classic or Total disaster","Cada liga elige cómo se puntúa.":"Each league chooses how it scores.",
+"Nota de SofaScore × 3 y resultado del equipo.":"SofaScore rating × 3 and team result.",
+"Además: goles, asistencias, tarjetas, penaltis, goles en propia, ocasiones claras falladas, errores que acaban en gol y portería a cero.":"Plus: goals, assists, cards, penalties, own goals, big chances missed, errors leading to goals and clean sheets.",
+"Una roja o un penalti fallado se notan muchísimo.":"A red card or a missed penalty really shows.",
+"Solo la nota de SofaScore × 4 y el resultado del equipo.":"Only the SofaScore rating × 4 and the team result.",
+"La nota ya resume todo el partido: goles, pases, tarjetas, errores…":"The rating already sums up the whole match: goals, passes, cards, errors…",
+"Más sencilla y sin contar nada dos veces.":"Simpler, and nothing counts twice.",
+"En las dos: no jugar resta −8, jugar menos de 30 minutos resta −3 y se aplica el multiplicador estrella.":"In both: not playing is −8, playing under 30 minutes is −3, and the star multiplier applies.",
 "Momentos desastre":"Disaster moments","· así se juega aquí":"· that's how we play here","Así se juega aquí.":"That's how we play here.","vacía":"empty",
 "Falla el penalti decisivo de la final del Mundial y lo manda por encima del larguero.":"Misses the deciding penalty of the World Cup final, blasting it over the bar.",
 "Dos errores clamorosos en la final de la Champions de Kiev ante el Real Madrid.":"Two howlers in the Champions League final in Kyiv against Real Madrid.",
@@ -530,6 +561,7 @@ Object.assign(EN, {
 "Ya has entrado":"You're logged in","admin":"admin","exclusiva":"exclusive","Ninguno.":"None."
 });
 EN_RE.push(
+ [/^Tu liga \((.+)\) usa la puntuación (clásica|desastre total)\.$/, (m,a,b)=>`Your league (${a}) uses ${b==="clásica"?"classic":"total disaster"} scoring.`],
  [/^Solo puedes hacer los cambios por jornada que marque la liga(?: \(en la tuya, (\d+)\))?\.$/, (m,n)=>"You can only make the changes per matchday the league allows"+(n?` (${n} in yours)`:"")+"."],
  [/^Tu liga \((.+)\) está en modo (normal|jugadores exclusivos)\.$/, (m,a,b)=>`Your league (${a}) is in ${b==="normal"?"normal":"exclusive players"} mode.`],
  [/^Casi está\. Te hemos mandado un correo a (.+)\. Pulsa el enlace que trae y ya podrás entrar\. Si no lo ves, mira en spam\.$/, "Almost done. We've sent an email to $1. Click its link and you can log in. If you don't see it, check spam."],
@@ -1029,7 +1061,7 @@ function vJornadas(el){
 
 /* ---------- reglas ---------- */
 function vReglas(el){
-  const P=S.config.minimo, D=S.config.divisor;
+  const P=S.config.minimo, D=S.config.divisor, CL=CLASICA(), RM=CL?4:3;
   const fila=(a,b)=>`<tr><td>${a}</td><td class="num">${b}</td></tr>`;
   const n2=x=>(Math.round(x*100)/100).toLocaleString(LOC(),{minimumFractionDigits:2,maximumFractionDigits:2});
   const sg=x=>(x>0?"+":x<0?"−":"")+n2(Math.abs(x));
@@ -1041,17 +1073,19 @@ function vReglas(el){
     <tr><td>Empate</td><td class="num">${p2(ra.empata)}</td><td class="num">${p2(rb.empata)}</td></tr>
     <tr><td>Gana ${b}</td><td class="num">${p2(ra.pierde)}</td><td class="num">${p2(rb.gana)}</td></tr></tbody></table>`;
   // ejemplo completo: defensa de 60 M
-  const mEj=1+60/D, base=(6.5-5.8)*3+2+rm.pierde, fin=base*mEj;
+  const mEj=1+60/D, base=(6.5-5.8)*RM+(CL?0:2)+rm.pierde, fin=base*mEj;
   el.innerHTML=`<h2>Reglas</h2><p class="sub">Gana quien más Puntos Desastre acumula: jugadores que juegan, pero juegan mal.</p>
   <div class="cols"><div class="panel"><h3>Plantilla</h3><table><tbody>
   ${fila("Sistema","4-4-2 o 4-3-3")}${fila("Porteros","1")}${fila("Defensas","4")}${fila("Centrocampistas","3 o 4")}${fila("Delanteros","2 o 3")}
-  ${fila("Gasto mínimo",M(P))}${fila("Gasto máximo","Sin límite")}${fila("Máximo por club","3")}${liga()?fila("Liga",esc(liga().nombre)):""}${fila("Modo",S.config.exclusivo?"Jugadores exclusivos":"Normal")}${fila("Cambios por jornada",S.config.exclusivo?"Sin límite (equipo nuevo cada jornada)":S.config.max_cambios)}</tbody></table></div>
+  ${fila("Gasto mínimo",M(P))}${fila("Gasto máximo","Sin límite")}${fila("Máximo por club","3")}${liga()?fila("Liga",esc(liga().nombre)):""}${fila("Modo",S.config.exclusivo?"Jugadores exclusivos":"Normal")}${fila("Puntuación",CL?"Clásica":"Desastre total")}${fila("Cambios por jornada",S.config.exclusivo?"Sin límite (equipo nuevo cada jornada)":S.config.max_cambios)}</tbody></table></div>
   <div class="panel"><h3>Puntos por partido</h3><table><tbody>
-  ${fila("No juega o no va convocado","−8")}${fila("Juega menos de 30 min","−3")}${fila("Rating","(6,5 − rating) × 3")}
+  ${CL?`${fila("No juega o no va convocado","−8")}${fila("Juega menos de 30 min","−3")}${fila("Rating","(6,5 − rating) × 4")}${fila("Resultado del equipo","10 × (E − A)")}</tbody></table>
+  <p class="small muted">Puntuación clásica: nada más. Goles, tarjetas o penaltis ya influyen en la nota de SofaScore.</p><table><tbody>`
+  :`  ${fila("No juega o no va convocado","−8")}${fila("Juega menos de 30 min","−3")}${fila("Rating","(6,5 − rating) × 3")}
   ${fila("Gol de defensa / medio / delantero o portero","−6 / −5 / −4")}${fila("Asistencia","−3")}${fila("Portería a cero (POR/DEF, 60+ min)","−4")}
   ${fila("Gol en propia","+6")}${fila("Comete penalti","+5")}${fila("Falla penalti","+6")}
   ${fila("Ocasión clara fallada","+3")}${fila("Error que acaba en gol del rival","+5")}
-  ${fila("Amarilla","+2")}${fila("Doble amarilla","+5")}${fila("Roja directa","+7")}</tbody></table></div></div>
+  ${fila("Amarilla","+2")}${fila("Doble amarilla","+5")}${fila("Roja directa","+7")}`}</tbody></table></div></div>
 
   <div class="panel" style="margin-top:16px"><h3>Modos de liga</h3>
   <p class="small">Quien crea la liga elige uno de estos dos modos. Después no se puede cambiar.${liga()?` <strong>Tu liga (${esc(liga().nombre)}) está en modo ${S.config.exclusivo?"jugadores exclusivos":"normal"}.</strong>`:""}</p>
@@ -1061,18 +1095,27 @@ function vReglas(el){
     <div class="modo${liga()&&S.config.exclusivo?" actual":""}"><p class="modo-t">Jugadores exclusivos${liga()&&S.config.exclusivo?' <span class="chip ok">tu liga</span>':""}</p>
       <ul class="small"><li>Cada jugador solo puede estar en un equipo de la liga: se lo queda el primero que guarda su alineación con él.</li><li>Cada jornada los equipos empiezan vacíos y hay que montarlos de nuevo antes del primer partido.</li><li>No hay límite de cambios.</li><li>Quien no guarde alineación suma −88, como si sus 11 jugadores no hubieran jugado.</li></ul></div>
   </div></div>
-  <div class="panel" style="margin-top:16px"><h3>Ocasiones claras y errores</h3>
+  ${CL?"":`<div class="panel" style="margin-top:16px"><h3>Ocasiones claras y errores</h3>
   <p class="small">Según SofaScore, una ocasión clara es una jugada en la que lo normal sería marcar: solo ante el portero, un remate a bocajarro… Cada una que el jugador falla suma +3. Los penaltis fallados no cuentan aquí, porque ya suman +6 aparte.</p>
   <p class="small">Un error que acaba en gol es un fallo del propio jugador (un mal pase atrás, un balón que se le escapa al portero…) que termina en gol del rival. Suma +5.</p>
-  <p class="small muted">Ejemplo: un delantero falla dos ocasiones claras y un penalti: 2 × 3 + 6 = +12, además de lo que sume por rating y resultado.</p></div>
+  <p class="small muted">Ejemplo: un delantero falla dos ocasiones claras y un penalti: 2 × 3 + 6 = +12, además de lo que sume por rating y resultado.</p></div>`}
+  <div class="panel" style="margin-top:16px"><h3>Puntuación: Clásica o Desastre total</h3>
+  <p class="small">Cada liga elige cómo se puntúa.${liga()?` <strong>Tu liga (${esc(liga().nombre)}) usa la puntuación ${CL?"clásica":"desastre total"}.</strong>`:""}</p>
+  <div class="modos">
+    <div class="modo${liga()&&!CL?" actual":""}"><p class="modo-t">Desastre total${liga()&&!CL?' <span class="chip ok">tu liga</span>':""}</p>
+      <ul class="small"><li>Nota de SofaScore × 3 y resultado del equipo.</li><li>Además: goles, asistencias, tarjetas, penaltis, goles en propia, ocasiones claras falladas, errores que acaban en gol y portería a cero.</li><li>Una roja o un penalti fallado se notan muchísimo.</li></ul></div>
+    <div class="modo${liga()&&CL?" actual":""}"><p class="modo-t">Clásica${liga()&&CL?' <span class="chip ok">tu liga</span>':""}</p>
+      <ul class="small"><li>Solo la nota de SofaScore × 4 y el resultado del equipo.</li><li>La nota ya resume todo el partido: goles, pases, tarjetas, errores…</li><li>Más sencilla y sin contar nada dos veces.</li></ul></div>
+  </div>
+  <p class="small muted">En las dos: no jugar resta −8, jugar menos de 30 minutos resta −3 y se aplica el multiplicador estrella.</p></div>
   <div class="panel" style="margin-top:16px"><h3>Rating</h3>
-  <p class="small">El rating es la nota que SofaScore pone a cada jugador en cada partido, de 3 a 10. Un 6,5 es un partido normal: no suma ni resta. Por cada punto por debajo de 6,5 sumas 3; por cada punto por encima, restas 3.</p>
+  <p class="small">El rating es la nota que SofaScore pone a cada jugador en cada partido, de 3 a 10. Un 6,5 es un partido normal: no suma ni resta. Por cada punto por debajo de 6,5 sumas ${RM}; por cada punto por encima, restas ${RM}.</p>
   <table class="tabla-ej"><thead><tr><th>Rating</th><th>Cuenta</th><th class="num">Puntos</th></tr></thead><tbody>
-  <tr><td>5,0 (partido malo)</td><td>(6,5 − 5,0) × 3</td><td class="num">${ptsHtml(4.5)}</td></tr>
-  <tr><td>6,0 (flojo)</td><td>(6,5 − 6,0) × 3</td><td class="num">${ptsHtml(1.5)}</td></tr>
-  <tr><td>6,5 (normal)</td><td>(6,5 − 6,5) × 3</td><td class="num">${ptsHtml(0)}</td></tr>
-  <tr><td>7,5 (bueno)</td><td>(6,5 − 7,5) × 3</td><td class="num">${ptsHtml(-3)}</td></tr>
-  <tr><td>9,0 (partidazo)</td><td>(6,5 − 9,0) × 3</td><td class="num">${ptsHtml(-7.5)}</td></tr></tbody></table></div>
+  <tr><td>5,0 (partido malo)</td><td>(6,5 − 5,0) × ${RM}</td><td class="num">${ptsHtml((6.5-5.0)*RM)}</td></tr>
+  <tr><td>6,0 (flojo)</td><td>(6,5 − 6,0) × ${RM}</td><td class="num">${ptsHtml((6.5-6.0)*RM)}</td></tr>
+  <tr><td>6,5 (normal)</td><td>(6,5 − 6,5) × ${RM}</td><td class="num">${ptsHtml((6.5-6.5)*RM)}</td></tr>
+  <tr><td>7,5 (bueno)</td><td>(6,5 − 7,5) × ${RM}</td><td class="num">${ptsHtml((6.5-7.5)*RM)}</td></tr>
+  <tr><td>9,0 (partidazo)</td><td>(6,5 − 9,0) × ${RM}</td><td class="num">${ptsHtml((6.5-9.0)*RM)}</td></tr></tbody></table></div>
 
   <div class="panel" style="margin-top:16px"><h3>Resultado del equipo</h3>
   <p class="small">Premia la <strong>sorpresa</strong>, no simplemente perder. Antes del partido, las cuotas de las casas de apuestas se convierten en probabilidades. Con ellas se calcula el resultado esperado de cada equipo, <span class="pts">E = P(gana) + 0,5 · P(empata)</span>, y se compara con el real, <span class="pts">A</span>, que vale 1 si gana, 0,5 si empata y 0 si pierde. Cada jugador que sale al campo suma <span class="pts">10 × (E − A)</span>.</p>
@@ -1097,13 +1140,13 @@ function vReglas(el){
   <div class="panel" style="margin-top:16px"><h3>Ejemplo completo</h3>
   <p class="small">Un defensa del Real Madrid que cuesta 60 M juega los 90 minutos contra el Elche y el Madrid pierde 0-1:</p>
   <table class="tabla-ej"><tbody>
-  <tr><td>Rating 5,8</td><td class="num">${ptsHtml((6.5-5.8)*3)}</td></tr>
-  <tr><td>Amarilla</td><td class="num">${ptsHtml(2)}</td></tr>
+  <tr><td>Rating 5,8</td><td class="num">${ptsHtml((6.5-5.8)*RM)}</td></tr>
+  ${CL?"":`<tr><td>Amarilla</td><td class="num">${ptsHtml(2)}</td></tr>`}
   <tr><td>Resultado: pierde siendo favorito (E = ${n2(rm.E)}, A = 0)</td><td class="num">${ptsHtml(rm.pierde)}</td></tr>
   <tr><td><strong>Suma</strong></td><td class="num">${ptsHtml(base)}</td></tr>
   <tr><td>Multiplicador estrella (1 + 60 / ${D})</td><td class="num">${fx(mEj)}</td></tr>
   <tr><td><strong>Total de la jornada</strong></td><td class="num"><strong>${ptsHtml(fin)}</strong></td></tr></tbody></table>
-  <p class="small muted">Si ese mismo defensa hubiera hecho un buen partido (rating 7,5) y el Madrid ganara, sumaría ${ptsHtml(-3+rm.gana)}, sin multiplicador porque sale negativo.</p></div>`;
+  <p class="small muted">Si ese mismo defensa hubiera hecho un buen partido (rating 7,5) y el Madrid ganara, sumaría ${ptsHtml(-RM+rm.gana)}, sin multiplicador porque sale negativo.</p></div>`;
 }
 
 /* ---------- ligas ---------- */
@@ -1122,7 +1165,7 @@ function vLigas(el){
      <div class="codigo-grande"><span id="cod-nueva">${esc(nuevaLiga.codigo)}</span>${copiarBoton(nuevaLiga.codigo,"cp-nueva")}</div></div>`:""}
   <h3>Mis ligas</h3>
   ${misLigas.length?`<div class="ligas-lista">${misLigas.map(x=>`<div class="liga-card${x.id===ligaId?" actual":""}">
-      <div class="liga-cab"><strong>${esc(x.nombre)}</strong>${x.rol==="admin"?' <span class="chip ok">admin</span>':""}${x.exclusivo?' <span class="chip">exclusiva</span>':""}</div>
+      <div class="liga-cab"><strong>${esc(x.nombre)}</strong>${x.rol==="admin"?' <span class="chip ok">admin</span>':""}${x.exclusivo?' <span class="chip">exclusiva</span>':""}${x.puntuacion==="clasica"?' <span class="chip">clásica</span>':""}</div>
       <div class="small muted">Gasto mínimo ${M(x.minimo)} · ${x.exclusivo?"equipo nuevo cada jornada":`${x.max_cambios} cambios por jornada`} · multiplicador 1 + precio / ${+x.divisor}</div>
       <div class="codigo-linea"><span class="small muted">Código</span> <code>${esc(x.codigo)}</code> ${copiarBoton(x.codigo,"cp-"+esc(x.id))}</div>
       ${x.id===ligaId?'<span class="small ok-txt">Es la liga que estás viendo</span>':`<button class="mini" data-ver="${esc(x.id)}">Ver esta liga</button>`}
@@ -1134,6 +1177,9 @@ function vLigas(el){
     <div class="panel"><h3>Crear una liga</h3>
       <form id="f-crear" novalidate>
         <div class="campo"><label for="c-nom">Nombre de la liga</label><input id="c-nom" maxlength="40" placeholder="Los del pueblo"></div>
+        <fieldset class="elige"><legend>Puntuación</legend>
+          <label class="opc"><input type="radio" name="c-punt" value="total" checked><span><strong>Desastre total</strong><span class="small muted">Nota, resultado, goles, tarjetas, penaltis, ocasiones falladas… Más emoción.</span></span></label>
+          <label class="opc"><input type="radio" name="c-punt" value="clasica"><span><strong>Clásica</strong><span class="small muted">Solo la nota de SofaScore y el resultado. Más sencilla.</span></span></label></fieldset>
         <div class="cols-nombres">
           <div class="campo"><label for="c-min">Gasto mínimo (M)</label><input id="c-min" type="number" min="0" step="5" value="375"></div>
           <div class="campo"><label for="c-div">Divisor del multiplicador</label><input id="c-div" type="number" min="1" step="5" value="25"></div>
@@ -1149,6 +1195,8 @@ function vLigas(el){
       <div class="campo"><label for="g-div">Divisor del multiplicador</label><input id="g-div" type="number" min="1" step="5" value="${l.divisor}"></div>
       <div class="campo"><label for="g-camb">Cambios por jornada</label><input id="g-camb" type="number" min="0" max="11" value="${l.max_cambios}"></div>
     </div>
+    <div class="campo" style="max-width:320px"><label for="g-punt">Puntuación</label><select id="g-punt"><option value="total"${l.puntuacion!=="clasica"?" selected":""}>Desastre total</option><option value="clasica"${l.puntuacion==="clasica"?" selected":""}>Clásica</option></select>
+      <p class="small muted">Si la cambias, se recalculan todas las jornadas con la nueva puntuación.</p></div>
     <p class="small muted">Modo de la liga: ${l.exclusivo?"jugadores exclusivos":"normal"} (se elige al crearla y no se puede cambiar).</p>
     <button id="g-guardar">Guardar reglas</button>
     <h3 style="margin-top:20px">Equipos y dueños</h3>
@@ -1180,13 +1228,14 @@ function vLigas(el){
     const nombre=el.querySelector("#c-nom").value.trim();
     if(nombre.length<3){ msgLigas={ok:false,t:"Ponle a la liga un nombre de al menos 3 caracteres."}; vLigas(el); return; }
     const {data,error}=await sb.rpc("crear_liga",{p_nombre:nombre, p_minimo:+el.querySelector("#c-min").value||0, p_max_cambios:+el.querySelector("#c-camb").value||0,
-      p_divisor:+el.querySelector("#c-div").value||25, p_exclusivo:el.querySelector("#c-excl").checked});
+      p_divisor:+el.querySelector("#c-div").value||25, p_exclusivo:el.querySelector("#c-excl").checked,
+      p_puntuacion:(el.querySelector('input[name="c-punt"]:checked')||{}).value||"total"});
     if(error){ aviso(false,error.message); return; }
     nuevaLiga=data; ligaId=data.id; guardaLocal("ld_liga",data.id); msgLigas=null; scrollTo(0,0); recargar();
   });
   if(l&&adminL){
     el.querySelector("#g-guardar").addEventListener("click",async()=>{
-      const v={minimo:+el.querySelector("#g-min").value, divisor:+el.querySelector("#g-div").value, max_cambios:Math.max(0,Math.min(11,+el.querySelector("#g-camb").value||0))};
+      const v={minimo:+el.querySelector("#g-min").value, divisor:+el.querySelector("#g-div").value, max_cambios:Math.max(0,Math.min(11,+el.querySelector("#g-camb").value||0)), puntuacion:el.querySelector("#g-punt").value};
       if(!(v.minimo>=0&&v.divisor>=1)){aviso(false,"Revisa los números: el divisor debe ser al menos 1.");return}
       const {error}=await sb.from("ligas").update(v).eq("id",l.id);
       aviso(!error, error?"No se pudieron guardar las reglas: "+error.message:"Reglas guardadas.");
@@ -1293,6 +1342,9 @@ function vInicio(el){
       <form class="panel grande-card" id="i-crear" novalidate>
         <h3>Crear una liga</h3>
         <div class="campo"><label for="i-nom">Nombre de la liga</label><input id="i-nom" maxlength="40" placeholder="Los del pueblo"></div>
+        <fieldset class="elige"><legend>Puntuación</legend>
+          <label class="opc"><input type="radio" name="i-punt" value="total" checked><span><strong>Desastre total</strong><span class="small muted">Nota, resultado, goles, tarjetas, penaltis, ocasiones falladas… Más emoción.</span></span></label>
+          <label class="opc"><input type="radio" name="i-punt" value="clasica"><span><strong>Clásica</strong><span class="small muted">Solo la nota de SofaScore y el resultado. Más sencilla.</span></span></label></fieldset>
         <details class="mas"><summary>Más opciones</summary>
           <div class="cols-nombres">
             <div class="campo"><label for="i-min">Gasto mínimo (M)</label><input id="i-min" type="number" min="0" step="5" value="375"></div>
@@ -1300,7 +1352,7 @@ function vInicio(el){
             <div class="campo"><label for="i-camb">Cambios por jornada</label><input id="i-camb" type="number" min="0" max="11" value="2"></div>
           </div>
           <label class="check"><input type="checkbox" id="i-excl"> <span><strong>Jugadores exclusivos.</strong> Cada jugador solo puede estar en un equipo de la liga: se lo queda el primero que lo guarda. Cada jornada los equipos empiezan vacíos y hay que montarlos de nuevo (no hay límite de cambios). Si alguien no guarda alineación, suma −88.</span></label>
-          <p class="small muted">Podrás cambiar estas reglas después, menos el modo exclusivo.</p>
+          <p class="small muted">Podrás cambiar estas reglas y la puntuación después, menos el modo exclusivo.</p>
         </details>
         <button type="submit" class="grande">Crear liga</button>
       </form>
@@ -1325,7 +1377,8 @@ function vInicio(el){
     e.preventDefault(); const nombre=el.querySelector("#i-nom").value.trim();
     if(nombre.length<3) return fallo("Ponle a la liga un nombre de al menos 3 caracteres.");
     const {data,error}=await sb.rpc("crear_liga",{p_nombre:nombre, p_minimo:+el.querySelector("#i-min").value||0, p_max_cambios:+el.querySelector("#i-camb").value||0,
-      p_divisor:+el.querySelector("#i-div").value||25, p_exclusivo:el.querySelector("#i-excl").checked});
+      p_divisor:+el.querySelector("#i-div").value||25, p_exclusivo:el.querySelector("#i-excl").checked,
+      p_puntuacion:(el.querySelector('input[name="i-punt"]:checked')||{}).value||"total"});
     if(error) return fallo(error.message);
     msgInicio=null; nuevaLiga=data; msgLigas=null; ligaId=data.id; guardaLocal("ld_liga",data.id);
     await recargar(); location.hash="#ligas";
