@@ -1,0 +1,1198 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Liga Desastre</title>
+<meta name="description" content="Fantasy de LaLiga al revés: gana el equipo que peor juega.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Libre+Franklin:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='4' y='6' width='18' height='26' rx='2' fill='%23e2ab0f' transform='rotate(-12 13 19)'/%3E%3Crect x='16' y='6' width='18' height='26' rx='2' fill='%23c4122f' transform='rotate(9 25 19)'/%3E%3C/svg%3E">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+
+/* Layout: acta arbitral — una columna de 1100px, cabecera de marcador y pestañas; tarjetas solo para los bloques que se operan */
+:root{
+  --bg:#f2f4ee; --surface:#ffffff; --sunk:#e7ebe3; --ink:#17221b; --muted:#5a685f; --line:#d3dacf;
+  --accent:#c4122f; --accent-ink:#ffffff; --yellow:#e2ab0f; --good:#1d7445; --bad:#b0122b;
+  --pitch:#2e7448; --pitch-line:rgba(255,255,255,.28); --on-pitch:#ffffff; --kit-line:rgba(0,0,0,.35);
+  --f-display:"Anton","Impact","Arial Narrow",sans-serif;
+  --f-body:"Libre Franklin",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1511; --surface:#17201a; --sunk:#1d2821; --ink:#e6ede7; --muted:#97a69c; --line:#2a362e;
+  --accent:#ff4b61; --accent-ink:#17060a; --yellow:#f0c23a; --good:#52c486; --bad:#ff6b7e; --pitch:#1d4a2f; --pitch-line:rgba(255,255,255,.18); --on-pitch:#e6ede7; --kit-line:rgba(0,0,0,.55); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1511; --surface:#17201a; --sunk:#1d2821; --ink:#e6ede7; --muted:#97a69c; --line:#2a362e;
+  --accent:#ff4b61; --accent-ink:#17060a; --yellow:#f0c23a; --good:#52c486; --bad:#ff6b7e; --pitch:#1d4a2f; --pitch-line:rgba(255,255,255,.18); --on-pitch:#e6ede7; --kit-line:rgba(0,0,0,.55); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1100px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;border-bottom:3px solid var(--ink);padding-bottom:12px}
+.marca{display:flex;align-items:center;gap:14px}
+.cards{position:relative;width:34px;height:44px;flex:none}
+.cards i{position:absolute;width:24px;height:34px;border-radius:3px;top:4px}
+.cards i:first-child{background:var(--yellow);left:0;transform:rotate(-12deg)}
+.cards i:last-child{background:var(--accent);left:10px;transform:rotate(9deg)}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,7vw,56px);line-height:.95;letter-spacing:.01em;margin:0;text-transform:uppercase}
+.lema{color:var(--muted);margin:4px 0 0;font-size:14px}
+nav.tabs{display:flex;flex-wrap:wrap;gap:4px}
+nav.tabs a{font-weight:600;font-size:14px;text-decoration:none;color:var(--muted);padding:6px 12px;border-radius:999px}
+nav.tabs a:hover{color:var(--ink);background:var(--sunk)}
+nav.tabs a[aria-current="page"]{background:var(--ink);color:var(--bg)}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.aviso{margin-top:16px;padding:10px 14px;border-left:4px solid var(--yellow);background:var(--sunk);font-size:14px}
+.aviso.err{border-color:var(--accent)}
+main{margin-top:24px}
+h2{font-family:var(--f-display);font-weight:400;font-size:28px;letter-spacing:.01em;text-transform:uppercase;margin:0 0 12px;text-wrap:balance}
+h3{font-size:15px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.06em}
+.sub{color:var(--muted);margin:-6px 0 16px;max-width:65ch}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:left;font-weight:600;padding:8px 10px;border-bottom:2px solid var(--ink)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+th.num{text-align:right}
+.pos1 td{font-weight:700}
+.pts{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600}
+.pts.pos{color:var(--good)} .pts.neg{color:var(--bad)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.vacio{padding:32px 16px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:820px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.sticky{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:820px){.sticky{position:static}}
+.filtros{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.filtros>*{flex:1 1 140px;min-width:0}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;width:100%;box-sizing:border-box}
+textarea{font-family:var(--f-mono);font-size:12px;resize:vertical}
+label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block;margin-bottom:4px}
+.campo{margin-bottom:12px}
+button{font:inherit;font-weight:600;cursor:pointer;border-radius:var(--r);border:1px solid var(--ink);background:var(--ink);color:var(--bg);padding:8px 14px}
+button.sec{background:transparent;color:var(--ink)}
+button.peligro{border-color:var(--accent);background:transparent;color:var(--accent)}
+button.mini{padding:3px 9px;font-size:13px}
+button:disabled{opacity:.4;cursor:not-allowed}
+.lista{max-height:560px;overflow-y:auto;border-top:1px solid var(--line)}
+.fila{display:grid;grid-template-columns:44px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line)}
+.fila .nom{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;padding:2px 0;width:38px;text-align:center;border-radius:3px;background:var(--sunk);color:var(--ink)}
+.tag.POR{background:var(--yellow);color:#1b1500}
+.tag.DEL{background:var(--accent);color:var(--accent-ink)}
+.meter{height:10px;background:var(--sunk);border-radius:5px;position:relative;margin:6px 0 4px;overflow:hidden}
+.meter b{position:absolute;inset:0 auto 0 0;background:var(--good);border-radius:5px}
+.meter b.over{background:var(--accent)}
+.meter i{position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.6}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{font-size:12px;font-family:var(--f-mono);padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
+.chip.ok{border-color:var(--good);color:var(--good)} .chip.ko{border-color:var(--accent);color:var(--accent)}
+ul.errs{margin:8px 0;padding-left:18px;color:var(--accent);font-size:13px}
+.ok-msg{color:var(--good);font-size:13px;font-weight:600;margin:8px 0}
+.sel-grupo{margin-bottom:8px}
+.sel-grupo .fila{grid-template-columns:44px minmax(0,1fr) auto auto}
+.partidos{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-bottom:20px}
+.partido{border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;background:var(--surface);font-size:13px}
+.partido .res{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.partido .res span:last-child{font-family:var(--f-mono)}
+details.eq{border-bottom:1px solid var(--line)}
+details.eq summary{display:flex;justify-content:space-between;gap:12px;padding:10px 4px;cursor:pointer;list-style:none}
+details.eq summary::-webkit-details-marker{display:none}
+details.eq summary::before{content:"+";font-family:var(--f-mono);color:var(--muted);width:14px}
+details.eq[open] summary::before{content:"−"}
+details.eq summary .n{flex:1;min-width:0}
+.desg{font-size:12px;color:var(--muted)}
+.cols{display:flex;flex-wrap:wrap;gap:16px}
+.cols>.panel{flex:1 1 300px;min-width:0}
+.fila-admin{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.estado-guardado{font-size:13px;font-weight:600}
+.barra-guardar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}
+footer{margin-top:40px;font-size:12px;color:var(--muted)}
+.once{background:var(--pitch);border-radius:var(--r);padding:16px 8px;display:grid;gap:14px;position:relative;overflow:hidden;margin-bottom:20px}
+.once::before{content:"";position:absolute;left:8px;right:8px;top:50%;border-top:2px solid var(--pitch-line)}
+.once::after{content:"";position:absolute;left:50%;top:50%;width:90px;height:90px;margin:-45px 0 0 -45px;border:2px solid var(--pitch-line);border-radius:50%}
+.linea{display:flex;justify-content:center;gap:6px;position:relative;z-index:1;min-width:0}
+.once{grid-template-columns:minmax(0,1fr)}
+.ficha{flex:1 1 0;min-width:0;max-width:140px;background:var(--surface);border-radius:var(--r);padding:8px 6px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.ficha .fn{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ficha .fc{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ficha .fp{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:700;font-size:18px;margin-top:2px}
+.ficha .fp.pos{color:var(--good)} .ficha .fp.neg{color:var(--bad)}
+.ficha .tag{margin-bottom:4px}
+.resumen-eq{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:baseline;margin-bottom:12px}
+.resumen-eq .big{font-family:var(--f-display);font-size:36px;line-height:1}
+a.eq-link{text-decoration:none;font-weight:600;border-bottom:1px dotted var(--muted)}
+a.eq-link:hover{border-bottom-style:solid}
+.fichar{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:860px){.fichar{grid-template-columns:minmax(0,1fr)}}
+.barra-form{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:end;margin-bottom:12px}
+.barra-form .campo{margin:0;flex:0 0 130px}
+.gasto{flex:1 1 200px;min-width:0}
+.gasto .meter{margin-bottom:0}
+.once-fichar{margin-bottom:16px}
+.hueco{flex:1 1 0;min-width:0;max-width:130px;border-radius:var(--r);padding:8px 4px 6px;text-align:center;position:relative;font:inherit;box-sizing:border-box}
+.hueco.lleno{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.hueco.libre{background:transparent;border:2px dashed var(--pitch-line);color:var(--on-pitch);cursor:pointer;min-height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:700;font-size:12px;letter-spacing:.06em}
+.hueco.libre .mas{font-size:22px;line-height:1;font-weight:400}
+.hueco.libre:hover,.hueco.libre.activo{border-style:solid;border-color:var(--on-pitch)}
+.hueco.destino{border-color:var(--yellow)}
+.hueco.drop{border-style:solid;border-color:var(--yellow);background:rgba(255,255,255,.12)}
+.hueco .fn{font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hueco .fc{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--f-mono)}
+.hueco .quitar{position:absolute;top:3px;right:3px;padding:0 6px;font-size:14px;line-height:18px;border-radius:999px;background:var(--sunk);color:var(--ink);border:0}
+.camiseta{display:block;margin:0 auto 2px;flex:none}
+.fila-j{display:grid;grid-template-columns:24px 40px minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--line)}
+.fila-j .camiseta{margin:0}
+.fila-j .nom{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fila-j.arrastrable{cursor:grab}
+.sobra{background:var(--sunk);border-left:4px solid var(--accent);padding:8px 10px;font-size:13px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.cols-nombres{display:flex;flex-wrap:wrap;gap:0 12px}
+.cols-nombres .campo{flex:1 1 180px;min-width:0}
+.once-mini{max-width:640px}
+.ranking td{vertical-align:middle}
+.jug{display:flex;align-items:center;gap:8px;min-width:0}
+.jug .camiseta{margin:0}
+button.jl{background:none;border:0;padding:0;margin:0;font:inherit;font-weight:inherit;color:inherit;cursor:pointer;text-align:inherit;border-radius:2px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:baseline;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:2px}
+button.jl:hover{text-decoration-color:currentColor}
+.modal-fondo{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding-top:calc(env(safe-area-inset-top,0px) + 24px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 24px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-sizing:border-box}
+.modal{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;max-width:820px;width:100%;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.35);position:relative;box-sizing:border-box;min-width:0}
+.modal .cerrar{position:absolute;top:12px;right:12px;font-size:18px;line-height:1;padding:4px 10px}
+.ficha-cab{display:flex;gap:14px;align-items:center;margin-bottom:12px;padding-right:44px}
+.ficha-cab .camiseta{margin:0}
+.ficha-cab h2{margin:0 0 4px;font-size:30px}
+.stats{display:flex;flex-wrap:wrap;gap:10px 28px;margin:8px 0 12px}
+.stats .big{font-family:var(--f-display);font-size:30px;line-height:1.1}
+body.con-modal{overflow:hidden}
+.pager{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;font-variant-numeric:tabular-nums}
+.pager button{min-width:36px;font-size:16px;line-height:1}
+.tabla-ej{margin:6px 0 10px;font-size:13px}
+.tabla-ej td,.tabla-ej th{padding:6px 8px}
+.cols-ej{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px 24px}
+.lang{background:transparent;color:var(--ink);border:1px solid var(--line);padding:4px 10px;font-size:13px;border-radius:999px}
+.lang:hover{border-color:var(--ink)}
+.derecha{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:flex-end}
+@media (prefers-reduced-motion:no-preference){nav.tabs a{transition:background .15s,color .15s}}
+
+.derecha{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.derecha-2{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:flex-end}
+.sel-liga{display:flex;align-items:center;gap:6px}
+.sel-liga label{margin:0}
+.sel-liga select{width:auto;max-width:220px;padding:5px 8px;font-size:14px;font-weight:600}
+.sesion{display:flex;align-items:center;gap:8px;min-width:0}
+.sesion .muted{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+a.btn-entrar{font-weight:700;font-size:14px;text-decoration:none;padding:6px 14px;border-radius:999px;border:1px solid var(--ink)}
+a.btn-entrar:hover,a.btn-entrar[aria-current="page"]{background:var(--ink);color:var(--bg)}
+.plazo{background:var(--sunk);border-left:4px solid var(--good);padding:10px 14px;margin:0 0 14px;font-size:14px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.acciones{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center}
+.ok-txt{color:var(--good);font-weight:600}
+.err-txt{color:var(--accent);font-weight:600}
+.panel.entrar{max-width:420px;margin:8px auto 0}
+.pestanas{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.pestanas button{background:transparent;color:var(--muted);border:0;border-bottom:3px solid transparent;border-radius:0;padding:8px 12px}
+.pestanas button.on{color:var(--ink);border-bottom-color:var(--accent)}
+.fila-admin.dueno{flex-wrap:wrap}
+.dueno-ctl{display:flex;gap:6px;align-items:center;flex:1 1 300px;justify-content:flex-end;min-width:0;flex-wrap:wrap}
+.dueno-ctl input{max-width:240px;padding:5px 8px;font-size:13px}
+code{font-family:var(--f-mono);font-size:.92em;background:var(--sunk);padding:1px 5px;border-radius:3px}
+.ligas-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:12px}
+.liga-card{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.liga-card.actual{border-color:var(--good);box-shadow:inset 4px 0 0 var(--good)}
+.liga-cab{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:16px}
+.codigo-linea{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.codigo-grande{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px}
+.codigo-grande span{font-family:var(--f-mono);font-size:32px;font-weight:600;letter-spacing:.06em;background:var(--sunk);padding:6px 14px;border-radius:var(--r)}
+.panel.nueva-liga{border-color:var(--good);margin-bottom:16px}
+label.check{display:flex;gap:10px;align-items:flex-start;text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;color:var(--ink);margin:4px 0 8px}
+label.check input{width:auto;margin-top:3px}
+tr.mio td{background:var(--sunk)}
+@media (max-width:700px){.derecha{align-items:flex-start}.derecha-2{justify-content:flex-start}}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+(function(){
+"use strict";
+/* ---------- conexión ---------- */
+const CFG = window.LIGA_CONFIG || {};
+const configurado = !!(CFG.url && CFG.anonKey && !/PEGA_AQUI|XXXX/.test(CFG.url + CFG.anonKey));
+const sb = (configurado && window.supabase) ? window.supabase.createClient(CFG.url, CFG.anonKey) : null;
+
+const DEF_CONFIG = {minimo:375, max_cambios:2, divisor:25, exclusivo:false};
+const S = {config:{...DEF_CONFIG}, jugadores:[], jornadas:{}, cal:{}, equipos:[], propietarios:[], miembros:[]};
+let J = new Map();
+let user = null, esAdmin = false, miEquipoId = null, misLigas = [], ligaId = null;
+let cargado = false, errorCarga = "", ultimaCarga = 0;
+const app = document.getElementById("app");
+const POSS = ["POR","DEF","MED","DEL"];
+const LIM = {POR:[1,1],DEF:[4,4],MED:[3,4],DEL:[2,3]};
+const RUTAS = {clasificacion:"Clasificación", equipos:"Equipos", fichar:"Mi equipo", jornadas:"Jornadas", reglas:"Reglas", ligas:"Ligas", admin:"Admin", entrar:"Entrar"};
+
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let LANG = "es"; try { LANG = localStorage.getItem("ld_lang")==="en" ? "en" : "es"; } catch(e){}
+const LOC = () => LANG==="en" ? "en-GB" : "es-ES";
+const f1 = x => (Math.round(x*10)/10).toLocaleString(LOC(),{minimumFractionDigits:1,maximumFractionDigits:1});
+const ptsHtml = x => `<span class="pts ${x>0?"pos":x<0?"neg":""}">${x>0?"+":""}${f1(x)}</span>`;
+const M = x => f1(x)+" M";
+const mult = j => 1 + ((j&&j.precio)||0)/S.config.divisor;
+const ptsFinal = (p,j) => !p ? 0 : p.t>0 ? p.t*mult(j) : p.t;
+const fx = m => "×"+(Math.round(m*100)/100).toLocaleString(LOC(),{minimumFractionDigits:2,maximumFractionDigits:2});
+const f2 = x => (Math.round(x*100)/100).toLocaleString(LOC(),{minimumFractionDigits:2,maximumFractionDigits:2});
+const nums = () => Object.keys(S.jornadas).map(Number).sort((a,b)=>a-b);
+const fecha = iso => { try { return new Date(iso).toLocaleString(LOC(),{weekday:"long", day:"numeric", month:"long", hour:"2-digit", minute:"2-digit"}); } catch(e){ return iso; } };
+const hace = iso => { const m=Math.round((Date.now()-new Date(iso).getTime())/60000); return m<1?"hace un momento":m<60?`hace ${m} min`:m<1440?`hace ${Math.round(m/60)} h`:`hace ${Math.round(m/1440)} días`; };
+const guardaLocal = (k,v) => { try { localStorage.setItem(k,v); } catch(e){} };
+const leeLocal = k => { try { return localStorage.getItem(k); } catch(e){ return null; } };
+function objetivo(){ const ahora=Date.now(); let o=null; Object.entries(S.cal).forEach(([n,ini])=>{ if(ini && new Date(ini).getTime()>ahora && (o===null||+n<o)) o=+n; }); return o; }
+const liga = () => misLigas.find(l=>l.id===ligaId) || null;
+const soyAdminLiga = () => { const l=liga(); return !!(l && (l.rol==="admin" || esAdmin)); };
+
+/* ---------- datos ---------- */
+async function cargar(){
+  if(!sb) return;
+  const [jg, jo] = await Promise.all([
+    sb.from("jugadores").select("*").range(0,4999),
+    sb.from("jornadas").select("*").order("n")
+  ]);
+  const err = [jg,jo].find(r=>r.error);
+  if(err) throw new Error(err.error.message);
+  S.jugadores = (jg.data||[]).map(j=>({id:+j.id, nombre:j.nombre, equipo:j.equipo, equipo_id:j.equipo_id, pos:j.pos_manual||j.pos, pos_orig:j.pos, pos_manual:j.pos_manual, precio:+j.precio}));
+  J = new Map(S.jugadores.map(j=>[j.id,j]));
+  S.cal = {}; S.jornadas = {};
+  (jo.data||[]).forEach(r=>{
+    S.cal[r.n] = r.inicio;
+    if(r.puntos && Object.keys(r.puntos).length) S.jornadas[r.n] = {jornada:r.n, partidos:r.partidos||[], puntos:r.puntos, avisos:r.avisos||[], actualizado:r.actualizado, inicio:r.inicio};
+  });
+  esAdmin=false; misLigas=[]; S.equipos=[]; S.propietarios=[]; S.miembros=[]; miEquipoId=null; S.config={...DEF_CONFIG};
+  if(user){
+    const me=(user.email||"").toLowerCase();
+    const [ad, mi, li] = await Promise.all([sb.from("admins").select("email"), sb.from("miembros").select("liga_id,email,rol"), sb.from("ligas").select("*")]);
+    const e2=[ad,mi,li].find(r=>r.error); if(e2) throw new Error(e2.error.message);
+    esAdmin = !!(ad.data||[]).find(r=>String(r.email).toLowerCase()===me);
+    const mias = (mi.data||[]).filter(r=>String(r.email).toLowerCase()===me);
+    misLigas = mias.map(m=>{ const l=(li.data||[]).find(x=>x.id===m.liga_id); return l?{...l, minimo:+l.minimo, divisor:+l.divisor, max_cambios:+l.max_cambios, rol:m.rol}:null; }).filter(Boolean)
+      .sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));
+    if(!misLigas.find(l=>l.id===ligaId)){ const g=leeLocal("ld_liga"); ligaId = (misLigas.find(l=>l.id===g)||misLigas[0]||{}).id || null; }
+    const l = liga();
+    if(l){
+      S.config = {minimo:l.minimo, max_cambios:l.max_cambios, divisor:l.divisor, exclusivo:!!l.exclusivo};
+      const eq = await sb.from("equipos").select("*").eq("liga_id", l.id);
+      if(eq.error) throw new Error(eq.error.message);
+      const ids = (eq.data||[]).map(e=>e.id);
+      const [ve, pr] = await Promise.all([
+        ids.length ? sb.from("versiones").select("*").in("equipo_id", ids).range(0,9999) : Promise.resolve({data:[]}),
+        sb.from("propietarios").select("equipo_id,email,liga_id").eq("liga_id", l.id)
+      ]);
+      if(ve.error) throw new Error(ve.error.message);
+      S.equipos = (eq.data||[]).map(e=>({id:e.id, nombre:e.nombre, manager:e.manager,
+        versiones:(ve.data||[]).filter(v=>v.equipo_id===e.id).map(v=>({desde:+v.desde, ids:(v.ids||[]).map(Number), pos:v.pos||{}, sistema:v.sistema})).sort((a,b)=>a.desde-b.desde)}));
+      S.propietarios = pr.data||[];
+      const mio = S.propietarios.find(r=>String(r.email).toLowerCase()===me);
+      miEquipoId = mio ? mio.equipo_id : null;
+      if(soyAdminLiga()){ const mm = await sb.from("miembros").select("email,rol").eq("liga_id", l.id); S.miembros = mm.data||[]; }
+    }
+  }
+  cargado = true; errorCarga = ""; ultimaCarga = Date.now();
+}
+async function recargar(silencioso){
+  try { await cargar(); } catch(e){ errorCarga = e.message || String(e); }
+  if(silencioso && ruta()==="fichar" && borrador.sucio) return;   // no pisar lo que estás editando
+  render();
+}
+function cambiarLiga(id){ ligaId=id; guardaLocal("ld_liga", id); borrador.sucio=false; borrador.clave=""; eqSel=null; recargar(); }
+
+/* ---------- idioma ---------- */
+const EN = {
+"Gasta a lo grande y gana con el equipo que peor juegue.":"Spend big and win with the team that plays the worst.",
+"Clasificación":"Standings","Equipos":"Teams","Fichajes":"Transfers","Fichar":"Sign","Jornadas":"Matchdays","Reglas":"Rules","Admin":"Admin",
+"Secciones":"Sections","Cambiar a español":"Cambiar a español","Switch to English":"Switch to English",
+"Va primero quien más Puntos Desastre suma.":"Most Disaster Points goes first.",
+"Equipo":"Team","Mánager":"Manager","Total":"Total","Jugador":"Player","Precio":"Price","Min":"Min","Pos":"Pos",
+"Puntos Desastre: cuantos más, mejor. Precios en millones.":"Disaster Points: the more, the better. Prices in millions.",
+"Total temporada":"Season total","Detalle por jugador":"Player breakdown","Temporada":"Season","Desglose":"Breakdown","Puntos":"Points",
+"No convocado":"Not in squad","No juega":"Did not play","Menos de 30 min":"Under 30 min","Amarilla":"Yellow card","Doble amarilla":"Second yellow",
+"Roja directa":"Straight red","Portería a cero":"Clean sheet","Su equipo no jugó":"His team didn't play","Su partido aún no se ha jugado":"His match hasn't been played yet",
+"pendiente":"pending","Jornada":"Matchday","Elegir jornada":"Choose matchday","Once desastre":"Disaster XI",
+"Sistema":"Formation","Nombre del equipo":"Team name","Tu nombre o apodo":"Your name or nickname","Nombre o apodo":"Name or nickname",
+"Generar código":"Generate code","Hacer cambios a un equipo inscrito":"Change a registered team","Elige equipo…":"Choose team…",
+"Todas las posiciones":"All positions","Todos los clubes":"All clubs","Más caros primero":"Most expensive first","Más baratos primero":"Cheapest first","Por nombre":"By name",
+"Tu alineación":"Your line-up","Posición":"Position","Club":"Club","Buscar jugador":"Search player","Orden":"Sort","Equipo":"Team",
+"Vaciar":"Clear","Equipo válido.":"Valid team.","Lleno":"Full","Quitar":"Remove","Copiar código":"Copy code","Código para el administrador":"Code for the admin",
+"Copiado. Mándalo por WhatsApp al administrador.":"Copied. Send it to the admin on WhatsApp.","Selecciónalo y cópialo a mano.":"Select it and copy it by hand.",
+"Aún no has fichado a nadie.":"You haven't signed anyone yet.","Toda la temporada":"Whole season","Partidos":"Matches",
+"El once desastre de la jornada":"Disaster XI of the matchday","El once desastre de la temporada":"Disaster XI of the season",
+"Los que más Puntos Desastre han dado en cada posición, con el multiplicador estrella ya aplicado.":"The players who gave the most Disaster Points in each position, with the star multiplier already applied.",
+"Ranking de jugadores":"Player ranking","Equipos de la liga":"League teams","Ningún jugador con ese filtro.":"No players match that filter.",
+"Ningún equipo estaba inscrito en esta jornada.":"No teams were registered for this matchday.","Aún no se ha cargado ninguna jornada.":"No matchday has been loaded yet.",
+"Ningún jugador coincide con el filtro.":"No players match the filter.",
+"Gana quien más Puntos Desastre acumula: jugadores que juegan, pero juegan mal.":"Whoever piles up the most Disaster Points wins: players who play, but play badly.",
+"Plantilla":"Squad","4-4-2 o 4-3-3":"4-4-2 or 4-3-3","Porteros":"Goalkeepers","Defensas":"Defenders","Centrocampistas":"Midfielders","3 o 4":"3 or 4","Delanteros":"Forwards","2 o 3":"2 or 3",
+"Gasto mínimo":"Minimum spend","Gasto máximo":"Maximum spend","Sin límite":"No limit","Máximo por club":"Max per club","Cambios por jornada":"Changes per matchday",
+"Puntos por partido":"Points per match","No juega o no va convocado":"Doesn't play or not in squad","Juega menos de 30 min":"Plays under 30 min","Rating":"Rating",
+"Gol de defensa / medio / delantero o portero":"Goal by defender / midfielder / forward or keeper","Asistencia":"Assist","Portería a cero (POR/DEF, 60+ min)":"Clean sheet (GK/DEF, 60+ min)",
+"Gol en propia":"Own goal","Comete penalti":"Concedes a penalty","Falla penalti":"Misses a penalty",
+"El rating es la nota que SofaScore pone a cada jugador en cada partido, de 3 a 10. Un 6,5 es un partido normal: no suma ni resta. Por cada punto por debajo de 6,5 sumas 3; por cada punto por encima, restas 3.":"The rating is the score SofaScore gives each player in each match, from 3 to 10. A 6.5 is an average game: it neither adds nor subtracts. Every point below 6.5 adds 3; every point above it takes away 3.",
+"Cuenta":"Calculation","5,0 (partido malo)":"5.0 (bad game)","6,0 (flojo)":"6.0 (poor)","6,5 (normal)":"6.5 (average)","7,5 (bueno)":"7.5 (good)","9,0 (partidazo)":"9.0 (outstanding)",
+"(6,5 − rating) × 3":"(6.5 − rating) × 3","(6,5 − 5,0) × 3":"(6.5 − 5.0) × 3","(6,5 − 6,0) × 3":"(6.5 − 6.0) × 3","(6,5 − 6,5) × 3":"(6.5 − 6.5) × 3","(6,5 − 7,5) × 3":"(6.5 − 7.5) × 3","(6,5 − 9,0) × 3":"(6.5 − 9.0) × 3",
+"Resultado del equipo":"Team result","Premia la":"It rewards","sorpresa":"surprise",
+", no simplemente perder. Antes del partido, las cuotas de las casas de apuestas se convierten en probabilidades. Con ellas se calcula el resultado esperado de cada equipo,":", not simply losing. Before the match, the bookmakers' odds are turned into probabilities. They give each team's expected result,",
+"E = P(gana) + 0,5 · P(empata)":"E = P(win) + 0.5 · P(draw)",
+", y se compara con el real,":", which is compared with the actual result,",
+", que vale 1 si gana, 0,5 si empata y 0 si pierde. Cada jugador que sale al campo suma":", worth 1 for a win, 0.5 for a draw and 0 for a defeat. Every player who takes the field gets",
+"Ejemplo 1: Real Madrid – Elche":"Example 1: Real Madrid – Elche","(gran favorito contra colista)":"(big favourite against bottom side)",
+"Probabilidades: Madrid gana 80 %, empate 15 %, Elche gana 5 %.":"Probabilities: Madrid win 80%, draw 15%, Elche win 5%.",
+"E Madrid = 0,80 + 0,5 × 0,15 =":"E Madrid = 0.80 + 0.5 × 0.15 =","E Elche = 0,05 + 0,5 × 0,15 =":"E Elche = 0.05 + 0.5 × 0.15 =","1 + precio / 25":"1 + price / 25","Rating 5,8":"Rating 5.8",
+"Resultado":"Result","Empate":"Draw",
+"Ejemplo 2: Betis – Sevilla":"Example 2: Betis – Sevilla","(partido igualado)":"(even match)",
+"Probabilidades: Betis gana 40 %, empate 30 %, Sevilla gana 30 %.":"Probabilities: Betis win 40%, draw 30%, Sevilla win 30%.",
+"E Betis = 0,40 + 0,5 × 0,30 =":"E Betis = 0.40 + 0.5 × 0.30 =","E Sevilla = 0,30 + 0,5 × 0,30 =":"E Sevilla = 0.30 + 0.5 × 0.30 =",
+"Por eso fichar solo jugadores del colista no sirve: cuando pierden, era lo esperado y casi no suman.":"That's why signing only players from the bottom side doesn't work: when they lose, it was expected and they barely score.",
+"Multiplicador estrella":"Star multiplier","Si un jugador termina la jornada en positivo (jugó mal), sus puntos se multiplican por":"If a player ends the matchday in positive numbers (he played badly), his points are multiplied by",
+". Si termina en negativo o no juega, no se multiplica.":". If he ends in negative numbers or doesn't play, there's no multiplier.",
+"Fichar a una estrella es una apuesta: casi siempre resta lo normal, pero su mal día vale por muchos.":"Signing a star is a gamble: he usually costs you the normal amount, but his bad day is worth many.",
+"Ejemplo completo":"Full example","Un defensa del Real Madrid que cuesta 60 M juega los 90 minutos contra el Elche y el Madrid pierde 0-1:":"A Real Madrid defender priced at 60M plays all 90 minutes against Elche and Madrid lose 0-1:",
+"Suma":"Sum","Total de la jornada":"Matchday total",
+"Si ese mismo defensa hubiera hecho un buen partido (rating 7,5) y el Madrid ganara, sumaría":"If the same defender had played well (rating 7.5) and Madrid had won, he would get",
+", sin multiplicador porque sale negativo.":", with no multiplier because it's negative.",
+"Administración":"Administration","Esta vista es de solo lectura: solo el propietario de la página puede guardar cambios.":"This view is read-only: only the page owner can save changes.",
+"Guardar y publicar":"Save and publish","Todo guardado.":"All saved.","Guardando…":"Saving…","Hay cambios sin guardar.":"There are unsaved changes.",
+"1. Jugadores":"1. Players","Sube":"Upload","2. Jornadas":"2. Matchdays","Sube uno o varios":"Upload one or more",". Si ya existe, se sustituye.":". If it already exists, it is replaced.",
+"Gasto mínimo (M)":"Minimum spend (M)","Divisor del multiplicador estrella":"Star multiplier divisor",
+"Multiplicador = 1 + precio / divisor. Más bajo, más pesan las estrellas.":"Multiplier = 1 + price / divisor. The lower it is, the more stars count.",
+"3. Inscribir equipo":"3. Register team","Código recibido":"Code received","Válido desde la jornada":"Valid from matchday","Saltarse el límite de cambios":"Skip the change limit","Inscribir":"Register",
+"4. Corregir posición":"4. Fix position",
+"Para jugadores mal clasificados por SofaScore. Vale para equipos nuevos y cambios; los equipos ya inscritos mantienen la posición con la que ficharon. La corrección se conserva aunque vuelvas a subir jugadores.json.":"For players SofaScore classifies wrongly. It applies to new teams and changes; registered teams keep the position they signed them in. The fix is kept even if you upload jugadores.json again.",
+"Equipos inscritos":"Registered teams","Ninguno.":"None.","Ninguna cargada.":"None loaded.","¿Seguro?":"Sure?",
+"Archivo jugadores.json":"jugadores.json file","Archivos de jornada":"Matchday files","Yamal, Raphinha…":"Yamal, Raphinha…","Los Pataperros":"The Clumsy Feet",
+"Ningún jugador con ese nombre.":"No player with that name.","Datos de ejemplo.":"Sample data.",
+"Todavía no hay equipos inscritos.":"No teams registered yet.","POR":"GK","MED":"MID","DEL":"FWD","Cambiar a español":"Cambiar a español","Cancelar":"Cancel"
+};
+const EN_RE = [
+[/^Tras (\d+) jornadas?\. Va primero quien más Puntos Desastre suma\.$/, (m,n)=>`After ${n} matchday${n==="1"?"":"s"}. Most Disaster Points goes first.`],
+[/^Jornada (\d+)$/, "Matchday $1"], [/^Desglose J(\d+)$/, "Breakdown MD$1"], [/^J(\d+)$/, "MD$1"],
+[/^Resultado \(E=([\d.]+), A=([\d.]+)\)$/, "Result (E=$1, A=$2)"], [/^Gol x(\d+)$/, "Goal x$1"], [/^Asistencia x(\d+)$/, "Assist x$1"],
+[/^Gol en propia x(\d+)$/, "Own goal x$1"], [/^Comete penalti x(\d+)$/, "Concedes penalty x$1"], [/^Falla penalti x(\d+)$/, "Missed penalty x$1"],
+[/^Estrella (×.+)$/, "Star $1"], [/^Rating ([\d.,]+)$/, "Rating $1"],
+[/^Gana (.+)$/, "$1 win"], [/^Alineación ([\d-]+) de (.+)$/, "$2 $1 line-up"],
+[/^(.+) · (\d+) versi(ón|ones) · desde (.+)$/, (m,a,n,_,d)=>`${a} · ${n} version${n==="1"?"":"s"} · from ${d.replace(/J/g,"MD")}`],
+[/^Elegir (POR|DEF|MED|DEL)$/, (m,p)=>"Choose "+({POR:"GK",DEF:"DEF",MED:"MID",DEL:"FWD"})[p]], [/^Fichar (.+)$/, "Sign $1"], [/^Quitar a (.+)$/, "Remove $1"], [/^Quitar (.+)$/, "Remove $1"], [/^Posición de (.+)$/, "$1's position"],
+[/^Llevas el (\d+)% del gasto mínimo$/, "You've spent $1% of the minimum"],
+[/^gastados · mínimo (.+)$/, "spent · minimum $1"],
+[/^Faltan (\d+) jugadores \(tienes (\d+) de 11\)\.$/, "$1 players missing (you have $2 of 11)."],
+[/^Tienes que gastar al menos (.+); te faltan (.+)\.$/, "You must spend at least $1; you're $2 short."],
+[/^(.+): tienes (\d+), se permiten (.+)\.$/, (m,p,n,r)=>`${p}: you have ${n}, allowed ${r.replace(" a "," to ")}.`],
+[/^(.+): (\d+) jugadores, máximo 3 por club\.$/, "$1: $2 players, max 3 per club."],
+[/^Sobran para ([\d-]+): (.+)\. Quítalos o cambia de sistema\.$/, "Too many for $1: $2. Remove them or change formation."],
+[/^Mostrando 200 de (\d+)\. Filtra para ver el resto\.$/, "Showing 200 of $1. Filter to see the rest."],
+[/^Carga su once actual\. Puedes cambiar como mucho (\d+) jugadores por jornada\.$/, "Loads their current XI. You can change at most $1 players per matchday."],
+[/^Elige el sistema y rellena los 11 huecos: pulsa un hueco vacío para ver jugadores de esa posición, o arrastra un jugador desde la lista\. Gasta al menos (.+) y no repitas más de 3 de un mismo club\.$/,
+  "Pick a formation and fill the 11 slots: tap an empty slot to see players for that position, or drag a player from the list. Spend at least $1 and don't pick more than 3 from the same club."],
+[/^Si gana el Madrid, lo esperado, apenas se mueve nada\. Si pierde, sus jugadores suman (.+) cada uno\.$/, "If Madrid win, as expected, almost nothing changes. If they lose, each of their players gets $1."],
+[/^En un partido igualado, perder da unos (.+) puntos y ganar quita más o menos lo mismo\.$/, "In an even match, losing gives about $1 points and winning takes away roughly the same."],
+[/^Resultado: pierde siendo favorito \(E = (.+), A = 0\)$/, "Result: loses as favourite (E = $1, A = 0)"],
+[/^Multiplicador estrella \(1 \+ 60 \/ (.+)\)$/, "Star multiplier (1 + 60 / $1)"],
+[/^1 \+ precio \/ (.+)$/, "1 + price / $1"],
+[/^\. Ahora hay (\d+) jugadores\.$/, ". There are $1 players now."], [/^(\d+) jugadores$/, "$1 players"],
+[/^(.+): no terminado \((.+)\); sus jugadores no puntúan aún$/, "$1: not finished ($2); its players don't score yet"],
+[/^Código no válido\. (.+)$/, "Invalid code. $1"], [/^El código debe empezar por LD1\.$/, "The code must start with LD1."],
+[/^Puntos actualizados (.+)\.$/, "Points updated $1."],
+[/^Página (\d+) de (\d+)$/, "Page $1 of $2"], [/^Página anterior$/, "Previous page"], [/^Página siguiente$/, "Next page"], [/^Primera página$/, "First page"], [/^Última página$/, "Last page"], [/^sin datos$/, "no data"], [/^Partidos jugados$/, "Matches played"], [/^Minutos$/, "Minutes"], [/^Media por partido jugado$/, "Average per match played"], [/^Está en: (.+)$/, "In teams: $1"], [/^No está en ningún equipo de la liga\.$/, "Not in any league team."], [/^Jornada a jornada$/, "Matchday by matchday"], [/^Cerrar$/, "Close"], [/^Bruto$/, "Raw"], [/^Final$/, "Final"], [/^Ficha de (.+)$/, "$1 profile"], [/^Ver ficha de (.+)$/, "View $1 profile"], [/^Puntos con el multiplicador estrella ya aplicado\. «Bruto» es antes de multiplicar\.$/, "Points with the star multiplier already applied. «Raw» is before multiplying."]
+];
+
+Object.assign(EN, {
+"Mi equipo":"My team","Ligas":"Leagues","Liga":"League","Entrar":"Log in","Salir":"Log out","Crear cuenta":"Sign up","Correo":"Email","Contraseña":"Password",
+"Cargando…":"Loading…","Mis ligas":"My leagues","Código":"Code","Copiar":"Copy","Copiado":"Copied","Es la liga que estás viendo":"This is the league you're viewing","Ver esta liga":"View this league",
+"Unirme con código":"Join with a code","Código de la liga":"League code","Unirme":"Join","Crear una liga":"Create a league","Nombre de la liga":"League name","Los del pueblo":"The village crew",
+"Divisor del multiplicador":"Multiplier divisor","Jugadores exclusivos.":"Exclusive players.","Jugadores exclusivos":"Exclusive players","jugadores exclusivos":"exclusive players","Crear liga":"Create league",
+"Cada jugador solo puede estar en un equipo de la liga: se lo queda el primero que lo guarda. Cada jornada los equipos empiezan vacíos y hay que montarlos de nuevo (no hay límite de cambios). Si alguien no guarda alineación, suma −88.":"Each player can only be in one team of the league: whoever saves him first keeps him. Every matchday teams start empty and must be built again (no change limit). Anyone who doesn't save a line-up gets −88.",
+"Con jugadores exclusivos, las estrellas se acaban pronto: conviene bajar el gasto mínimo (por ejemplo, a 250 M).":"With exclusive players, the stars run out fast: it's a good idea to lower the minimum spend (for example, to 250M).",
+"Todavía no estás en ninguna liga.":"You're not in any league yet.","Guardar reglas":"Save rules","Equipos y dueños":"Teams and owners","Quitar equipo":"Remove team","Borrar la liga":"Delete the league",
+"Se borran todos sus equipos y alineaciones. No se puede deshacer.":"All its teams and line-ups are deleted. This can't be undone.","Pulsa otra vez para borrarla del todo":"Press again to delete it for good",
+"Los equipos nuevos se asignan solos a quien los crea. Aquí puedes asignar un equipo a otro correo o quitarlo de la liga. Un correo solo puede tener un equipo en cada liga.":"New teams are assigned automatically to whoever creates them. Here you can assign a team to another email or remove it from the league. An email can only have one team per league.",
+"correo del dueño":"owner's email","Guardar":"Save","Guardar mi equipo":"Save my team","Deshacer cambios":"Undo changes","Tienes cambios sin guardar.":"You have unsaved changes.","Ocupado":"Taken",
+"Modo":"Mode","Normal":"Normal","Sin límite (equipo nuevo cada jornada)":"No limit (new team every matchday)","Cierre de alineaciones":"Line-up deadline","Al empezar el primer partido de la jornada":"When the first match of the matchday kicks off",
+"En esta liga cada jugador solo puede estar en un equipo: se lo queda el primero que guarda su alineación con él. Cada jornada los equipos empiezan vacíos y hay que volver a montarlos antes de que empiece el primer partido. Quien no guarde alineación suma −88, como si sus 11 jugadores no hubieran jugado.":"In this league each player can only be in one team: whoever saves a line-up with him first keeps him. Every matchday teams start empty and must be rebuilt before the first match kicks off. Anyone who doesn't save a line-up gets −88, as if their 11 players hadn't played.",
+"Aún no la has guardado: si no guardas nada, tu equipo suma −88.":"You haven't saved it yet: if you save nothing, your team gets −88.",
+"Si no guardas nada, juegas con la de la jornada anterior.":"If you save nothing, you play with last matchday's line-up.","Guardada":"Saved",
+"Liga con":"League with",": cada jugador solo puede estar en un equipo de la liga (se lo queda quien lo guarda primero) y cada jornada se empieza con el equipo vacío.":": each player can only be in one team of the league (whoever saves him first keeps him) and every matchday starts with an empty team.",
+"Todavía no hay equipos en esta liga.":"There are no teams in this league yet.","Todavía no hay equipos en esta liga. Monta el tuyo en":"There are no teams in this league yet. Build yours in","y pasa el código":"and share the code","a tus amigos.":"with your friends.",
+"No existe ninguna liga con ese código. Revisa que esté bien escrito.":"There's no league with that code. Check it's written correctly.",
+"Para ver tu liga,":"To see your league,","entra o crea una cuenta":"log in or sign up",". Solo hace falta un correo y una contraseña.":". You only need an email and a password.",
+"Todavía no estás en ninguna liga. Ve a":"You're not in any league yet. Go to","para crear una o unirte con un código.":"to create one or join with a code.",
+"Para crear una liga o unirte a una,":"To create a league or join one,","Pasa este código a tus amigos. Con él entran en":"Share this code with your friends. They use it in","Ligas → Unirme con código":"Leagues → Join with a code",
+"Ponle a la liga un nombre de al menos 3 caracteres.":"Give the league a name of at least 3 characters.","El código tiene la forma DSTR-XXXX (cuatro letras o números).":"The code looks like DSTR-XXXX (four letters or numbers).",
+"Reglas guardadas.":"Rules saved.","Dueño guardado.":"Owner saved.","Dueño quitado.":"Owner removed.","Equipo quitado de la liga.":"Team removed from the league.","Liga borrada.":"League deleted.",
+"Ese correo ya tiene otro equipo en esta liga.":"That email already has another team in this league.","No presentó alineación esta jornada: −88.":"No line-up this matchday: −88.",
+"Estado de los datos":"Data status","Corregir posición":"Fix position","Subir jugadores.json o jornada_N.json":"Upload jugadores.json or jornada_N.json",
+"Los puntos los sube el script de tu ordenador. Si no puede, sube aquí los archivos a mano:":"Points are uploaded by the script on your computer. If it can't, upload the files here by hand:",
+"Para jugadores mal clasificados por SofaScore. Vale para equipos nuevos y cambios en todas las ligas; los ya fichados mantienen la posición con la que se ficharon.":"For players SofaScore classifies wrongly. It applies to new teams and changes in every league; players already signed keep the position they were signed in.",
+"¿Has olvidado la contraseña? Pídele al administrador que te la restablezca.":"Forgot your password? Ask the admin to reset it.",
+"Mínimo 6 caracteres. Tu correo no lo ve nadie más que el administrador.":"At least 6 characters. Nobody but the admin sees your email.",
+"Correo o contraseña incorrectos.":"Wrong email or password.","Ese correo ya tiene cuenta. Usa la pestaña Entrar.":"That email already has an account. Use the Log in tab.",
+"Escribe un correo válido.":"Enter a valid email.","La contraseña debe tener al menos 6 caracteres.":"The password must have at least 6 characters.","Entrando…":"Logging in…","Creando la cuenta…":"Creating the account…",
+"Ya has entrado":"You're logged in","admin":"admin","exclusiva":"exclusive","Ninguno.":"None."
+});
+EN_RE.push(
+ [/^Gasto mínimo (.+) · equipo nuevo cada jornada · multiplicador 1 \+ precio \/ (.+)$/, "Minimum spend $1 · new team every matchday · multiplier 1 + price / $2"],
+ [/^Gasto mínimo (.+) · (\d+) cambios por jornada · multiplicador 1 \+ precio \/ (.+)$/, "Minimum spend $1 · $2 changes per matchday · multiplier 1 + price / $3"],
+ [/^Alineación para la jornada (\d+)\.$/, "Line-up for matchday $1."], [/^Puedes cambiarla hasta el (.+)\.$/, "You can change it until $1."],
+ [/^Equipos de (.+)$/, "$1 teams"], [/^Gestionar (.+)$/, "Manage $1"], [/^Borrar (.+)$/, "Delete $1"], [/^Liga creada: (.+)$/, "League created: $1"],
+ [/^Te has unido a (.+)\. Ahora monta tu equipo en Mi equipo\.$/, "You've joined $1. Now build your team in My team."],
+ [/^Modo de la liga: (jugadores exclusivos|normal) \(se elige al crearla y no se puede cambiar\)\.$/, (m,x)=>`League mode: ${x==="normal"?"normal":"exclusive players"} (chosen when it's created; it can't be changed).`],
+ [/^Miembros sin equipo: (.+)$/, "Members without a team: $1"],
+ [/^La alineación de (.+) se verá cuando empiece la jornada para la que la ha guardado\.$/, "$1's line-up will be shown when the matchday it was saved for kicks off."], [/^Cambios: (\d+) de (\d+)$/, "Changes: $1 of $2"], [/^Guardado para la jornada (\d+)\.$/, "Saved for matchday $1."],
+ [/^(.+) no presentó alineación en la jornada (\d+): suma −88\.$/, "$1 didn't submit a line-up for matchday $2: −88."],
+ [/^Llevas (\d+) cambios respecto a tu equipo actual y el máximo es (\d+)\.$/, "You have $1 changes from your current team and the max is $2."],
+ [/^Has iniciado sesión como$/, "You're logged in as"], [/^Datos cargados (.+)$/, "Data loaded $1"], [/^Puntos Desastre: cuantos más, mejor\. Precios en millones\. · Datos cargados (.+)$/, "Disaster Points: the more, the better. Prices in millions. · Data loaded $1"],
+ [/^hace (\d+) min$/, "$1 min ago"], [/^hace (\d+) h$/, "$1 h ago"], [/^hace (\d+) días$/, "$1 days ago"], [/^hace un momento$/, "just now"],
+ [/^Puedes hacer hasta (\d+) cambios por jornada\.$/, "You can make up to $1 changes per matchday."],
+ [/^Elige el sistema y rellena los 11 huecos: pulsa un hueco vacío para ver jugadores de esa posición, o arrastra un jugador desde la lista\. Gasta al menos (.+) y no repitas más de 3 de un mismo club\.( Puedes hacer hasta (\d+) cambios por jornada\.)?$/,
+  (m,a,b,c)=>`Pick a formation and fill the 11 slots: tap an empty slot to see players for that position, or drag a player from the list. Spend at least ${a} and don't pick more than 3 from the same club.${c?` You can make up to ${c} changes per matchday.`:""}`],
+ [/^(.+) · Tras (\d+) jornadas?\. Va primero quien más Puntos Desastre suma\.$/, (m,l,n)=>`${l} · After ${n} matchday${n==="1"?"":"s"}. Most Disaster Points goes first.`]
+);
+
+function tr(s){
+  if(LANG!=="en") return s;
+  const k0=s.trim(); if(!k0) return s;
+  const pre=k0.startsWith("· ")?"· ":"", k=pre?k0.slice(2):k0;
+  let r=EN[k];
+  if(r===undefined){ for(const [re,rp] of EN_RE){ if(re.test(k)){ r=k.replace(re,rp); break; } } }
+  return r===undefined ? s : s.replace(k0,pre+r);
+}
+function traducir(root){
+  if(LANG!=="en"||!root) return;
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>/^(SCRIPT|STYLE)$/.test(n.parentNode&&n.parentNode.nodeName)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  const ns=[]; while(w.nextNode()) ns.push(w.currentNode);
+  ns.forEach(n=>{const v=tr(n.nodeValue); if(v!==n.nodeValue) n.nodeValue=v;});
+  [root,...(root.querySelectorAll?root.querySelectorAll("[placeholder],[aria-label],[title]"):[])].forEach(e=>e.getAttribute&&["placeholder","aria-label","title"].forEach(a=>{const v=e.getAttribute(a); if(v){const x=tr(v); if(x!==v) e.setAttribute(a,x);}}));
+}
+new MutationObserver(ms=>{ if(LANG!=="en") return; ms.forEach(m=>{ if(m.type==="characterData") { const v=tr(m.target.nodeValue); if(v!==m.target.nodeValue) m.target.nodeValue=v; } else m.addedNodes.forEach(n=>{ if(n.nodeType===3){const v=tr(n.nodeValue); if(v!==n.nodeValue) n.nodeValue=v;} else if(n.nodeType===1) traducir(n); }); }); })
+  .observe(document.getElementById("app"),{childList:true,subtree:true,characterData:true});
+document.documentElement.lang=LANG;
+
+/* ---------- ficha de jugador ---------- */
+const jn = j => j ? `<button type="button" class="jl" data-pj="${j.id}" aria-label="Ver ficha de ${esc(j.nombre)}">${esc(j.nombre)}</button>` : "";
+let modalPrevio = null;
+function abrirJugador(id){
+  const j=J.get(id); if(!j) return;
+  let fondo=document.getElementById("modal-fondo");
+  if(!fondo){
+    fondo=document.createElement("div"); fondo.id="modal-fondo"; fondo.className="modal-fondo"; fondo.hidden=true;
+    fondo.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-tit"><button class="sec mini cerrar" id="modal-x" aria-label="Cerrar">×</button><div id="modal-c"></div></div>';
+    document.body.appendChild(fondo);
+    fondo.addEventListener("click",e=>{ if(e.target===fondo) cerrarJugador(); });
+    fondo.querySelector("#modal-x").addEventListener("click",cerrarJugador);
+    fondo.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".jl"); if(b&&fondo.contains(b)){e.stopPropagation();}});
+  }
+  const ns=nums().slice().reverse();
+  let tot=0,pj=0,min=0;
+  const filas=ns.map(n=>{
+    const p=S.jornadas[n].puntos[String(id)];
+    if(!p) return `<tr><td>J${n}</td><td class="num">–</td><td class="num">–</td><td class="desg">sin datos</td><td class="num">–</td><td class="num">–</td></tr>`;
+    const fin=ptsFinal(p,j); tot+=fin; min+=p.min||0; if((p.min||0)>0) pj++;
+    return `<tr><td>J${n}</td><td class="num">${p.min}</td><td class="num">${p.rating?f1(p.rating):"–"}</td>
+      <td class="desg">${p.d.map(([c,v])=>`${esc(c)} <span class="pts">${v>0?"+":""}${f1(v)}</span>`).join(" · ")}${p.t>0?` · <strong>Estrella ${fx(mult(j))}</strong>`:""}</td>
+      <td class="num">${ptsHtml(p.t)}${p.t>0?`<div class="muted small">${f2(p.t)}</div>`:""}</td><td class="num">${ptsHtml(fin)}${p.t>0?`<div class="muted small">${f2(p.t)} ${fx(mult(j))} = ${f2(fin)}</div>`:""}</td></tr>`;
+  }).join("");
+  const ultima=ns[0];
+  const enEquipos=S.equipos.filter(e=>{const v=ultima!=null?versionEn(e,ultima):e.versiones[e.versiones.length-1]; const vv=e.versiones.length?e.versiones.reduce((a,b)=>b.desde>a.desde?b:a):null; return (v&&v.ids.includes(id))||(vv&&vv.ids.includes(id));}).map(e=>e.nombre);
+  const c=fondo.querySelector("#modal-c");
+  c.innerHTML=`<div class="ficha-cab">${camiseta(j.equipo,48)}<div><h2 id="modal-tit">${esc(j.nombre)}</h2>
+    <div class="small muted">${esc(j.equipo)} · <span class="tag ${j.pos}">${j.pos}</span> · ${M(j.precio)} · ${fx(mult(j))}</div></div></div>
+    <div class="stats"><div><div class="muted small">Total temporada</div><div class="big">${ptsHtml(tot)}</div></div>
+      <div><div class="muted small">Partidos jugados</div><div class="big">${pj}</div></div>
+      <div><div class="muted small">Minutos</div><div class="big">${min}</div></div>
+      <div><div class="muted small">Media por partido jugado</div><div class="big">${pj?ptsHtml(tot/pj):"–"}</div></div></div>
+    <p class="small">${enEquipos.length?`Está en: ${enEquipos.map(esc).join(", ")}`:"No está en ningún equipo de la liga."}</p>
+    <h3>Jornada a jornada</h3>
+    ${ns.length?`<div class="scroll"><table><thead><tr><th>J</th><th class="num">Min</th><th class="num">Rating</th><th>Desglose</th><th class="num">Bruto</th><th class="num">Final</th></tr></thead><tbody>${filas}</tbody></table></div>
+    <p class="small muted">Puntos con el multiplicador estrella ya aplicado. «Bruto» es antes de multiplicar.</p>`:'<p class="muted">Aún no se ha cargado ninguna jornada.</p>'}`;
+  if(fondo.hidden) modalPrevio=document.activeElement;
+  fondo.hidden=false; document.body.classList.add("con-modal");
+  traducir(fondo);
+  fondo.querySelector("#modal-x").focus();
+}
+function cerrarJugador(){
+  const fondo=document.getElementById("modal-fondo"); if(!fondo||fondo.hidden) return;
+  fondo.hidden=true; document.body.classList.remove("con-modal");
+  if(modalPrevio&&document.contains(modalPrevio)) modalPrevio.focus(); modalPrevio=null;
+}
+document.addEventListener("click",e=>{ const b=e.target.closest&&e.target.closest(".jl"); if(b){ e.preventDefault(); e.stopPropagation(); abrirJugador(+b.dataset.pj); } }, true);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") cerrarJugador(); });
+
+/* ---------- reglas del juego ---------- */
+function posMapa(v){const m={}; v.ids.forEach(id=>{const p=(v.pos&&v.pos[id])||(J.get(id)||{}).pos; if(p) m[id]=p}); return m}
+function sellar(){S.equipos.forEach(e=>e.versiones.forEach(v=>{if(!v.pos) v.pos=posMapa(v)}))}
+function mapaNuevo(ids,fijas){const m={}; ids.forEach(id=>{const p=(fijas&&fijas[id])||(J.get(id)||{}).pos; if(p) m[id]=p}); return m}
+function validar(ids,fijas){
+  const sel = ids.map(i=>J.get(i)).filter(Boolean);
+  const cuenta = {POR:0,DEF:0,MED:0,DEL:0}, clubes = {};
+  let gasto = 0;
+  sel.forEach(j=>{cuenta[(fijas&&fijas[j.id])||j.pos]++; clubes[j.equipo]=(clubes[j.equipo]||0)+1; gasto+=j.precio});
+  const MIN = S.config.minimo, err = [];
+  if (sel.length!==11) err.push(`Faltan ${11-sel.length} jugadores (tienes ${sel.length} de 11).`);
+  POSS.forEach(p=>{const [a,b]=LIM[p]; if(cuenta[p]<a||cuenta[p]>b) err.push(`${p}: tienes ${cuenta[p]}, se permiten ${a===b?a:a+" a "+b}.`)});
+  Object.entries(clubes).forEach(([c,n])=>{ if(n>3) err.push(`${c}: ${n} jugadores, máximo 3 por club.`)});
+  if (gasto<MIN) err.push(`Tienes que gastar al menos ${M(MIN)}; te faltan ${M(MIN-gasto)}.`);
+  return {ok:!err.length, err, cuenta, clubes, gasto};
+}
+function versionEn(eq,n){ if(S.config.exclusivo) return eq.versiones.find(x=>x.desde===n)||null; let v=null; eq.versiones.forEach(x=>{if(x.desde<=n&&(!v||x.desde>=v.desde))v=x}); return v}
+function puntosEquipo(eq,n){
+  const jor=S.jornadas[n], v=versionEn(eq,n); if(!jor) return null;
+  if(!v){ if(S.config.exclusivo && eq.versiones.some(x=>x.desde<n)) return {total:-88, filas:[], vacio:true}; return null; }
+  const filas=v.ids.map(id=>({j:J.get(id)||{id,nombre:"Jugador "+id,pos:"?",equipo:"?"}, p:jor.puntos[String(id)]||null}));
+  return {total:filas.reduce((s,f)=>s+ptsFinal(f.p,f.j),0), filas};
+}
+function clasificacion(){
+  const ns=nums();
+  return S.equipos.map(eq=>{
+    const porJ=ns.map(n=>{const r=puntosEquipo(eq,n);return r?r.total:null});
+    const jug=porJ.filter(x=>x!==null);
+    return {eq, porJ, total:jug.reduce((a,b)=>a+b,0), jugadas:jug.length, ultima:jug.length?jug[jug.length-1]:null};
+  }).sort((a,b)=>b.total-a.total);
+}
+function cambios(a,b){const s=new Set(a); return b.filter(x=>!s.has(x)).length}
+
+/* ---------- marco ---------- */
+function ruta(){const h=location.hash.slice(1); return RUTAS[h]?h:"clasificacion"}
+function render(){
+  let r=ruta();
+  if(r==="admin" && !esAdmin) r="clasificacion";
+  const navs=Object.entries(RUTAS).filter(([k])=>k!=="entrar" && (k!=="admin"||esAdmin))
+    .map(([k,v])=>`<a href="#${k}"${k===r?' aria-current="page"':""}>${v}</a>`).join("");
+  const sesion = user
+    ? `<span class="sesion"><span class="muted small">${esc(user.email)}</span> <button class="mini sec" id="salir">Salir</button></span>`
+    : `<a class="btn-entrar" href="#entrar"${r==="entrar"?' aria-current="page"':""}>Entrar</a>`;
+  const selLiga = misLigas.length
+    ? `<div class="sel-liga"><label for="ligasel">Liga</label><select id="ligasel">${misLigas.map(l=>`<option value="${esc(l.id)}"${l.id===ligaId?" selected":""}>${esc(l.nombre)}</option>`).join("")}</select></div>` : "";
+  app.innerHTML=`<div class="wrap">
+    <header class="top"><div class="marca"><div class="cards" aria-hidden="true"><i></i><i></i></div>
+      <div><h1>Liga Desastre</h1><p class="lema">Gasta a lo grande y gana con el equipo que peor juegue.</p></div></div>
+      <div class="derecha"><nav class="tabs" aria-label="Secciones">${navs}</nav>
+        <div class="derecha-2">${selLiga}${sesion}<button class="lang" id="lang" aria-label="${LANG==="en"?"Cambiar a español":"Switch to English"}">${LANG==="en"?"ES":"EN"}</button></div></div></header>
+    ${!configurado?`<div class="aviso err"><strong>Falta configurar la conexión.</strong> Edita <code>config.js</code> y pon la dirección y la clave pública de tu proyecto de Supabase.</div>`:""}
+    ${errorCarga?`<div class="aviso err">No se pudieron cargar los datos: ${esc(errorCarga)}. Recarga la página en un rato.</div>`:""}
+    <main id="vista"></main>
+    <footer>Puntos Desastre: cuantos más, mejor. Precios en millones.${ultimaCarga?` · Datos cargados ${new Date(ultimaCarga).toLocaleTimeString(LOC(),{hour:"2-digit",minute:"2-digit"})}`:""}</footer></div>`;
+  document.getElementById("lang").addEventListener("click",()=>{LANG=LANG==="en"?"es":"en"; guardaLocal("ld_lang",LANG); document.documentElement.lang=LANG; render();});
+  const s=document.getElementById("salir"); if(s) s.addEventListener("click",async()=>{await sb.auth.signOut(); location.hash="#clasificacion";});
+  const ls=document.getElementById("ligasel"); if(ls) ls.addEventListener("change",e=>cambiarLiga(e.target.value));
+  const v=document.getElementById("vista");
+  if(configurado && !cargado && !errorCarga){ v.innerHTML=`<div class="vacio">Cargando…</div>`; return; }
+  ({clasificacion:vClasif, equipos:vEquipos, fichar:vFichar, jornadas:vJornadas, reglas:vReglas, ligas:vLigas, admin:vAdmin, entrar:vEntrar})[r](v);
+}
+addEventListener("hashchange",()=>{render(); scrollTo(0,0)});
+
+// Mensaje para las pestañas que necesitan una liga
+function sinLiga(el, titulo){
+  if(!user){ el.innerHTML=`<h2>${titulo}</h2><div class="vacio">Para ver tu liga, <a href="#entrar">entra o crea una cuenta</a>. Solo hace falta un correo y una contraseña.</div>`; return true; }
+  if(!liga()){ el.innerHTML=`<h2>${titulo}</h2><div class="vacio">Todavía no estás en ninguna liga. Ve a <a href="#ligas">Ligas</a> para crear una o unirte con un código.</div>`; return true; }
+  return false;
+}
+
+/* ---------- clasificación ---------- */
+function vClasif(el){
+  if(sinLiga(el,"Clasificación")) return;
+  const ns=nums(), c=clasificacion();
+  if(!S.equipos.length){el.innerHTML=`<h2>Clasificación</h2><p class="sub">${esc(liga().nombre)}</p><div class="vacio">Todavía no hay equipos en esta liga. Monta el tuyo en <a href="#fichar">Mi equipo</a> y pasa el código <code>${esc(liga().codigo)}</code> a tus amigos.</div>`;return}
+  const cab=ns.slice(-5);
+  el.innerHTML=`<h2>Clasificación</h2><p class="sub"><strong>${esc(liga().nombre)}</strong> · ${ns.length?`Tras ${ns.length} jornada${ns.length>1?"s":""}. Va primero quien más Puntos Desastre suma.`:"Aún no se ha cargado ninguna jornada."}${(()=>{const u=nums().map(n=>S.jornadas[n].actualizado).filter(Boolean).sort().pop();return u?` <span class="muted">Puntos actualizados ${esc(hace(u))}.</span>`:""})()}</p>
+  <div class="scroll"><table><thead><tr><th class="num">#</th><th>Equipo</th><th>Mánager</th>${cab.map(n=>`<th class="num">J${n}</th>`).join("")}<th class="num">Total</th></tr></thead>
+  <tbody>${c.map((r,i)=>`<tr class="${i===0&&ns.length?"pos1":""}${r.eq.id===miEquipoId?" mio":""}"><td class="num">${i+1}</td><td><a class="eq-link" href="#equipos" data-eq="${esc(r.eq.id)}">${esc(r.eq.nombre)}</a></td><td class="muted">${esc(r.eq.manager)}</td>
+  ${cab.map(n=>{const v=r.porJ[ns.indexOf(n)];return `<td class="num">${v===null?'<span class="muted">–</span>':ptsHtml(v)}</td>`}).join("")}
+  <td class="num">${ptsHtml(r.total)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("a[data-eq]"); if(a){eqSel=a.dataset.eq; if(location.hash==="#equipos"){e.preventDefault();render()}}});
+
+/* ---------- equipos ---------- */
+let eqSel=null, jEq=null;
+function vEquipos(el){
+  if(sinLiga(el,"Equipos")) return;
+  if(!S.equipos.length){el.innerHTML=`<h2>Equipos</h2><div class="vacio">Todavía no hay equipos en esta liga.</div>`;return}
+  const ns=nums();
+  let eq=S.equipos.find(e=>e.id===eqSel)||S.equipos.find(e=>e.id===miEquipoId)||S.equipos[0]; eqSel=eq.id;
+  if(!ns.includes(jEq)) jEq=ns.length?ns[ns.length-1]:null;
+  const selEq=`<div class="filtros" style="max-width:560px"><select id="eqsel" aria-label="Equipo">${S.equipos.map(e=>`<option value="${esc(e.id)}"${e.id===eq.id?" selected":""}>${esc(e.nombre)} (${esc(e.manager)})${e.id===miEquipoId?" · tu equipo":""}</option>`).join("")}</select>
+    ${ns.length?`<select id="jeq" aria-label="Jornada">${ns.map(n=>`<option value="${n}"${n===jEq?" selected":""}>Jornada ${n}</option>`).join("")}</select>`:""}</div>`;
+  const conecta=()=>{el.querySelector("#eqsel").addEventListener("change",e=>{eqSel=e.target.value;vEquipos(el)}); const js=el.querySelector("#jeq"); if(js) js.addEventListener("change",e=>{jEq=+e.target.value;vEquipos(el)});};
+  if(!eq.versiones.length){ el.innerHTML=`<h2>Equipos</h2>${selEq}<div class="vacio">La alineación de ${esc(eq.nombre)} se verá cuando empiece la jornada para la que la ha guardado.</div>`; conecta(); return; }
+  if(jEq!=null && S.config.exclusivo && !versionEn(eq,jEq)){ el.innerHTML=`<h2>Equipos</h2>${selEq}<div class="vacio">${esc(eq.nombre)} no presentó alineación en la jornada ${jEq}${eq.versiones.some(x=>x.desde<jEq)?": suma −88.":"."}</div>`; conecta(); return; }
+  const v=jEq!=null?(versionEn(eq,jEq)||eq.versiones[0]):eq.versiones.reduce((a,b)=>b.desde>a.desde?b:a);
+  const jor=jEq!=null?S.jornadas[jEq]:null;
+  const tot=id=>ns.reduce((s,n)=>{const vv=versionEn(eq,n);if(!vv||!vv.ids.includes(id))return s;const p=S.jornadas[n].puntos[String(id)];return s+ptsFinal(p,J.get(id))},0);
+  const filas=v.ids.map(id=>{const j0=J.get(id)||{id,nombre:"Jugador "+id,pos:"MED",equipo:"?",precio:0};const j={...j0,pos:(v.pos&&v.pos[id])||j0.pos};const p=jor?jor.puntos[String(id)]||null:null;return {j,p,f:ptsFinal(p,j),t:tot(id)}});
+  const totalJ=filas.reduce((s,x)=>s+x.f,0), totalT=(clasificacion().find(r=>r.eq.id===eq.id)||{total:0}).total;
+  const cuenta=POSS.reduce((o,p)=>(o[p]=filas.filter(x=>x.j.pos===p).length,o),{});
+  const sistema=`${cuenta.DEF}-${cuenta.MED}-${cuenta.DEL}`;
+  const ficha=x=>`<div class="ficha" title="${esc(x.j.nombre)} · ${esc(x.j.equipo)}">${camiseta(x.j.equipo,30)}<div class="fn">${jn(x.j)}</div><div class="fc">${esc(x.j.equipo)}</div>
+    <div class="fp ${x.f>0?"pos":x.f<0?"neg":""}">${jor?(x.p?(x.f>0?"+":"")+f1(x.f):'<span class="small muted">pendiente</span>'):M(x.j.precio)}</div></div>`;
+  const lineas=["DEL","MED","DEF","POR"].map(p=>`<div class="linea">${filas.filter(x=>x.j.pos===p).map(ficha).join("")}</div>`).join("");
+  const gasto=filas.reduce((s,x)=>s+(x.j.precio||0),0);
+  el.innerHTML=`<h2>Equipos</h2>
+  <div class="filtros" style="max-width:560px"><select id="eqsel" aria-label="Equipo">${S.equipos.map(e=>`<option value="${esc(e.id)}"${e.id===eq.id?" selected":""}>${esc(e.nombre)} (${esc(e.manager)})${e.id===miEquipoId?" · tu equipo":""}</option>`).join("")}</select>
+  ${ns.length?`<select id="jeq" aria-label="Jornada">${ns.map(n=>`<option value="${n}"${n===jEq?" selected":""}>Jornada ${n}</option>`).join("")}</select>`:""}</div>
+  <div class="resumen-eq"><div><div class="muted small">${jor?"Jornada "+jEq:"Sin jornadas"}</div><div class="big">${jor?ptsHtml(totalJ):"–"}</div></div>
+  <div><div class="muted small">Total temporada</div><div class="big">${ptsHtml(totalT)}</div></div>
+  <div class="small muted">${esc(eq.manager)} · ${sistema} · ${M(gasto)}</div></div>
+  <div class="once" role="img" aria-label="Alineación ${sistema} de ${esc(eq.nombre)}">${lineas}</div>
+  <h3>Detalle por jugador</h3>
+  <div class="scroll"><table><thead><tr><th>Pos</th><th>Jugador</th><th class="num">Precio</th><th class="num">Min</th><th>Desglose${jor?" J"+jEq:""}</th><th class="num">J${jEq??"–"}</th><th class="num">Temporada</th></tr></thead><tbody>
+  ${filas.sort((a,b)=>POSS.indexOf(a.j.pos)-POSS.indexOf(b.j.pos)||b.f-a.f).map(x=>`<tr><td><span class="tag ${x.j.pos}">${x.j.pos}</span></td><td>${jn(x.j)}<div class="muted small">${esc(x.j.equipo)}</div></td>
+  <td class="num">${M(x.j.precio)}<div class="muted small">${fx(mult(x.j))}</div></td><td class="num">${x.p?x.p.min:"–"}</td>
+  <td class="desg">${x.p?x.p.d.map(([c,v])=>`${esc(c)} <span class="pts">${v>0?"+":""}${f1(v)}</span>`).join(" · ")+(x.p.t>0?` · <strong>Estrella ${fx(mult(x.j))}</strong>`:""):(jor?"Su partido aún no se ha jugado":"–")}</td>
+  <td class="num">${jor&&x.p?ptsHtml(x.f):"–"}</td><td class="num">${ptsHtml(x.t)}</td></tr>`).join("")}
+  </tbody></table></div>
+  ${eq.versiones.length>1?`<p class="small muted">Este equipo ha hecho cambios: la alineación mostrada es la que contaba en la jornada elegida.</p>`:""}`;
+  el.querySelector("#eqsel").addEventListener("change",e=>{eqSel=e.target.value;vEquipos(el)});
+  const js=el.querySelector("#jeq"); if(js) js.addEventListener("change",e=>{jEq=+e.target.value;vEquipos(el)});
+}
+
+/* ---------- camisetas (colores de la primera equipación, dibujo genérico) ---------- */
+const KITS = {
+  "Barcelona":["#a50044","#004d98","rayas"], "Atlético Madrid":["#cb3524","#ffffff","rayas"],
+  "Real Madrid":["#ffffff","#d4a017","liso"], "Real Betis":["#00954c","#ffffff","rayas"],
+  "Real Sociedad":["#0067b1","#ffffff","rayas"], "Sevilla":["#ffffff","#d71920","liso"],
+  "Athletic Club":["#ee2523","#ffffff","rayas"], "Deportivo":["#ffffff","#0055a4","rayas"],
+  "Racing Club":["#ffffff","#00843d","liso"], "Alavés":["#ffffff","#0057a8","rayas"],
+  "Villarreal":["#ffe667","#005187","liso"], "Celta":["#8ac3ee","#c8102e","liso"],
+  "Espanyol":["#ffffff","#007fc8","rayas"], "Rayo Vallecano":["#ffffff","#e53027","banda"],
+  "Getafe":["#005999","#ffffff","liso"], "Osasuna":["#d91a21","#0a346f","liso"],
+  "Elche":["#ffffff","#05642c","franja"], "Levante":["#b4053f","#004d98","rayas"],
+  "Valencia":["#ffffff","#111111","liso"], "Málaga":["#ffffff","#0075c9","rayas"]
+};
+let kitN = 0;
+function camiseta(club, s){
+  s = s || 28;
+  const [a,b,st] = KITS[club] || ["#9aa5a0","#5f6b65","liso"];
+  const id = "kit" + (++kitN);
+  const body = "M13 4 L7 6.5 L2 12.5 L6.5 18 L10 15.5 L10 37 L30 37 L30 15.5 L33.5 18 L38 12.5 L33 6.5 L27 4 C25 7.5 15 7.5 13 4 Z";
+  let extra = "";
+  if (st==="rayas") extra = `<g clip-path="url(#${id})" fill="${b}"><rect x="6" y="0" width="4" height="40"/><rect x="14" y="0" width="4" height="40"/><rect x="22" y="0" width="4" height="40"/><rect x="30" y="0" width="4" height="40"/></g>`;
+  if (st==="banda") extra = `<g clip-path="url(#${id})" fill="${b}"><polygon points="8 4 14 4 32 37 26 37"/></g>`;
+  if (st==="franja") extra = `<g clip-path="url(#${id})" fill="${b}"><rect x="0" y="17" width="40" height="5"/></g>`;
+  return `<svg class="camiseta" width="${s}" height="${s}" viewBox="0 0 40 40" aria-hidden="true"><defs><clipPath id="${id}"><path d="${body}"/></clipPath></defs>`
+    + `<path d="${body}" fill="${a}"/>${extra}<path d="M13 4 C15 7.5 25 7.5 27 4" fill="none" stroke="${b}" stroke-width="2"/>`
+    + `<path d="${body}" fill="none" stroke="var(--kit-line)" stroke-width="1"/></svg>`;
+}
+
+/* ---------- mi equipo (fichar) ---------- */
+const FORMAS = {"4-4-2":{POR:1,DEF:4,MED:4,DEL:2}, "4-3-3":{POR:1,DEF:4,MED:3,DEL:3}};
+let borrador = {ids:[], nombre:"", manager:"", fijas:null, formacion:"4-4-2", sucio:false, clave:""};
+const filtro = {pos:"", club:"", q:"", orden:"precio_desc"};
+let arrastrando = null, msgGuardar = null, ocupados = new Set();
+const posB = j => (borrador.fijas&&borrador.fijas[j.id]) || j.pos;
+function porPos(){ const g={POR:[],DEF:[],MED:[],DEL:[]}; borrador.ids.forEach(i=>{const j=J.get(i); if(j) g[posB(j)].push(j)}); return g; }
+function hayHueco(pos){ return porPos()[pos].length < FORMAS[borrador.formacion][pos]; }
+function miEquipo(){ return S.equipos.find(e=>e.id===miEquipoId) || null; }
+function bases(){
+  const eq=miEquipo(), o=objetivo();
+  if(!eq) return {eq:null, base:null, pend:null, o};
+  let base=null, pend=null;
+  eq.versiones.forEach(v=>{ if(o!==null && v.desde===o) pend=v; else if((o===null||v.desde<o) && (!base||v.desde>base.desde)) base=v; });
+  if(S.config.exclusivo) base=null;   // modo exclusivo: cada jornada se empieza de cero
+  return {eq, base, pend, o};
+}
+function iniciarBorrador(){
+  const {eq, base, pend, o} = bases();
+  const clave = (user?user.email:"")+"|"+(ligaId||"")+"|"+(miEquipoId||"")+"|"+o+"|"+(pend?pend.ids.join(","):"")+"|"+(base?base.ids.join(","):"");
+  if(borrador.clave===clave && borrador.sucio) return;
+  const v = pend || base;
+  borrador = {ids: v ? v.ids.filter(i=>J.has(i)) : [], nombre: eq?eq.nombre:"", manager: eq?eq.manager:"",
+              fijas: base ? posMapa(base) : null, formacion: (v&&FORMAS[v.sistema])?v.sistema:"4-4-2", sucio:false, clave};
+  if(v && !v.sistema){ const del=borrador.ids.map(i=>J.get(i)).filter(j=>j&&posB(j)==="DEL").length; borrador.formacion = del>=3?"4-3-3":"4-4-2"; }
+}
+function tocar(){ borrador.sucio = true; msgGuardar = null; }
+
+function vFichar(el){
+  if(sinLiga(el,"Mi equipo")) return;
+  if(!S.jugadores.length){ el.innerHTML=`<h2>Mi equipo</h2><div class="vacio">El administrador aún no ha cargado los jugadores.</div>`; return; }
+  iniciarBorrador();
+  const {eq, base, pend, o} = bases();
+  const clubs=[...new Set(S.jugadores.map(j=>j.equipo))].sort((a,b)=>a.localeCompare(b,"es"));
+  const plazo = o!==null
+    ? `<div class="plazo"><strong>Alineación para la jornada ${o}.</strong> Puedes cambiarla hasta el ${esc(fecha(S.cal[o]))}. ${pend?'<span class="chip ok">Guardada</span>':(S.config.exclusivo?'<span class="err-txt">Aún no la has guardado: si no guardas nada, tu equipo suma −88.</span>':(eq?'<span class="muted">Si no guardas nada, juegas con la de la jornada anterior.</span>':''))}</div>
+      ${S.config.exclusivo?'<div class="aviso">Liga con <strong>jugadores exclusivos</strong>: cada jugador solo puede estar en un equipo de la liga (se lo queda quien lo guarda primero) y cada jornada se empieza con el equipo vacío.</div>':''}`
+    : `<div class="aviso">Ahora mismo no hay ninguna jornada abierta para fichar. Vuelve cuando el administrador cargue el calendario de la siguiente.</div>`;
+  el.innerHTML=`<h2>Mi equipo</h2>
+  ${plazo}
+  <p class="sub">Elige el sistema y rellena los 11 huecos: pulsa un hueco vacío para ver jugadores de esa posición, o arrastra un jugador desde la lista. Gasta al menos ${M(S.config.minimo)} y no repitas más de 3 de un mismo club.${base?` Puedes hacer hasta ${S.config.max_cambios} cambios por jornada.`:""}</p>
+  <div class="fichar">
+    <section class="col-campo">
+      <div class="barra-form">
+        <div class="campo"><label for="form">Sistema</label><select id="form">${Object.keys(FORMAS).map(f=>`<option${f===borrador.formacion?" selected":""}>${f}</option>`).join("")}</select></div>
+        <div class="gasto" id="gasto"></div>
+      </div>
+      <div class="once once-fichar" id="campo" aria-label="Tu alineación"></div>
+      <div id="estado-eq"></div>
+    </section>
+    <section class="col-lista" id="col-lista">
+      <div class="filtros">
+        <select id="f-pos" aria-label="Posición"><option value="">Todas las posiciones</option>${POSS.map(p=>`<option${filtro.pos===p?" selected":""}>${p}</option>`).join("")}</select>
+        <select id="f-club" aria-label="Club"><option value="">Todos los clubes</option>${clubs.map(c=>`<option${filtro.club===c?" selected":""}>${esc(c)}</option>`).join("")}</select>
+        <input id="f-q" type="search" placeholder="Buscar jugador" value="${esc(filtro.q)}" aria-label="Buscar jugador">
+        <select id="f-orden" aria-label="Orden"><option value="precio_desc">Más caros primero</option><option value="precio_asc"${filtro.orden==="precio_asc"?" selected":""}>Más baratos primero</option><option value="nombre"${filtro.orden==="nombre"?" selected":""}>Por nombre</option></select>
+      </div><div class="lista" id="lista"></div>
+    </section>
+  </div>`;
+  const upd=()=>{filtro.pos=el.querySelector("#f-pos").value;filtro.club=el.querySelector("#f-club").value;filtro.q=el.querySelector("#f-q").value;filtro.orden=el.querySelector("#f-orden").value;pintarLista();pintarCampo()};
+  ["f-pos","f-club","f-orden"].forEach(id=>el.querySelector("#"+id).addEventListener("change",upd));
+  el.querySelector("#f-q").addEventListener("input",upd);
+  el.querySelector("#form").addEventListener("change",e=>{borrador.formacion=e.target.value;tocar();pintarCampo();pintarLista()});
+  pintarLista(); pintarCampo();
+  cargarOcupados();
+}
+async function cargarOcupados(){
+  if(!S.config.exclusivo||!sb||!ligaId){ ocupados=new Set(); return; }
+  const {data,error}=await sb.rpc("ocupados_liga",{p_liga:ligaId});
+  if(!error){ ocupados=new Set((data||[]).map(r=>+(r.jugador_id!==undefined?r.jugador_id:r))); pintarLista(); }
+}
+
+function pintarLista(){
+  const nrm=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  const q=nrm(filtro.q.trim());
+  let l=S.jugadores.filter(j=>(!filtro.pos||j.pos===filtro.pos)&&(!filtro.club||j.equipo===filtro.club)&&(!q||nrm(j.nombre).includes(q)));
+  l.sort(filtro.orden==="precio_asc"?(a,b)=>a.precio-b.precio:filtro.orden==="nombre"?(a,b)=>a.nombre.localeCompare(b.nombre,"es"):(a,b)=>b.precio-a.precio);
+  const total=l.length; l=l.slice(0,200);
+  const sel=new Set(borrador.ids), libre={}; POSS.forEach(p=>libre[p]=hayHueco(p));
+  const box=document.getElementById("lista"); if(!box) return;
+  box.innerHTML=l.map(j=>{
+    const esta=sel.has(j.id), ocup=!esta&&ocupados.has(j.id), puede=esta||(libre[j.pos]&&!ocup);
+    return `<div class="fila-j${puede&&!esta?" arrastrable":""}"${puede&&!esta?` draggable="true" data-drag="${j.id}"`:""}>${camiseta(j.equipo,24)}<span class="tag ${j.pos}">${j.pos}</span>
+    <span class="nom">${esc(j.nombre)} <span class="muted small">· ${esc(j.equipo)}</span></span><span class="num">${M(j.precio)} <span class="muted small">${fx(mult(j))}</span></span>
+    <button class="mini ${esta?"peligro":"sec"}" data-id="${j.id}" ${puede?"":"disabled"} aria-label="${esta?"Quitar":"Fichar"} ${esc(j.nombre)}">${esta?"Quitar":ocup?"Ocupado":puede?"Fichar":"Lleno"}</button></div>`}).join("")
+    +(total>200?`<p class="muted small" style="padding:8px 4px">Mostrando 200 de ${total}. Filtra para ver el resto.</p>`:"")
+    +(!total?`<p class="muted small" style="padding:8px 4px">Ningún jugador coincide con el filtro.</p>`:"");
+  box.querySelectorAll("button[data-id]").forEach(b=>b.addEventListener("click",()=>alternar(+b.dataset.id)));
+  box.querySelectorAll("[data-drag]").forEach(r=>{
+    r.addEventListener("dragstart",e=>{const j=J.get(+r.dataset.drag); arrastrando=j; try{e.dataTransfer.setData("text/plain",String(j.id));e.dataTransfer.effectAllowed="copy"}catch(_){}
+      document.querySelectorAll(`.hueco.libre[data-pos="${j.pos}"]`).forEach(h=>h.classList.add("destino"))});
+    r.addEventListener("dragend",()=>{arrastrando=null; document.querySelectorAll(".hueco").forEach(h=>h.classList.remove("destino","drop"))});
+  });
+}
+
+function alternar(id){
+  const i=borrador.ids.indexOf(id);
+  if(i>=0) borrador.ids.splice(i,1);
+  else { const j=J.get(id); if(!j||!hayHueco(posB(j))) return; borrador.ids.push(id); }
+  tocar(); pintarLista(); pintarCampo();
+}
+
+function pintarCampo(){
+  const campo=document.getElementById("campo"); if(!campo) return;
+  const F=FORMAS[borrador.formacion], g=porPos();
+  const lleno=j=>`<div class="hueco lleno" data-pos="${posB(j)}"><button class="quitar" data-q="${j.id}" aria-label="Quitar a ${esc(j.nombre)}">×</button>${camiseta(j.equipo,34)}
+      <div class="fn">${esc(j.nombre)}</div><div class="fc">${M(j.precio)} · ${fx(mult(j))}</div></div>`;
+  const libre=p=>`<button class="hueco libre${filtro.pos===p?" activo":""}" data-pos="${p}" aria-label="Elegir ${p}"><span class="mas">+</span><span>${p}</span></button>`;
+  campo.innerHTML=["DEL","MED","DEF","POR"].map(p=>{
+    const n=F[p], js=g[p].slice(0,n);
+    return `<div class="linea">${js.map(lleno).join("")}${Array.from({length:n-js.length},()=>libre(p)).join("")}</div>`;
+  }).join("");
+  campo.querySelectorAll("button[data-q]").forEach(b=>b.addEventListener("click",()=>alternar(+b.dataset.q)));
+  campo.querySelectorAll(".hueco.libre").forEach(h=>{
+    h.addEventListener("click",()=>{
+      filtro.pos=h.dataset.pos; const s=document.getElementById("f-pos"); if(s) s.value=filtro.pos;
+      pintarLista(); pintarCampo();
+      if(matchMedia("(max-width:860px)").matches){const c=document.getElementById("col-lista"); if(c) c.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"})}
+    });
+    h.addEventListener("dragover",e=>{if(arrastrando&&arrastrando.pos===h.dataset.pos){e.preventDefault();h.classList.add("drop")}});
+    h.addEventListener("dragleave",()=>h.classList.remove("drop"));
+    h.addEventListener("drop",e=>{e.preventDefault(); const j=arrastrando; arrastrando=null; if(j&&j.pos===h.dataset.pos) alternar(j.id)});
+  });
+  pintarEstado(g,F);
+}
+
+function pintarEstado(g,F){
+  const {base, o} = bases();
+  const v=validar(borrador.ids,borrador.fijas), P=S.config.minimo;
+  const pct=Math.min(100,v.gasto/P*100);
+  const gd=document.getElementById("gasto");
+  if(gd) gd.innerHTML=`<div class="small"><strong class="num">${M(v.gasto)}</strong> <span class="muted">gastados · mínimo ${M(P)}</span></div>
+    <div class="meter" role="img" aria-label="Llevas el ${Math.round(pct)}% del gasto mínimo"><b style="width:${pct}%"></b></div>`;
+  const sobran=POSS.flatMap(p=>g[p].slice(F[p]));
+  const err=v.err.filter(e=>!/^(POR|DEF|MED|DEL):/.test(e));
+  if(sobran.length) err.unshift(`Sobran para ${borrador.formacion}: ${sobran.map(j=>j.nombre+" ("+posB(j)+")").join(", ")}. Quítalos o cambia de sistema.`);
+  const nc = base ? cambios(base.ids, borrador.ids) : 0;
+  if(base && nc>S.config.max_cambios) err.push(`Llevas ${nc} cambios respecto a tu equipo actual y el máximo es ${S.config.max_cambios}.`);
+  const ok=!err.length && borrador.ids.length===11;
+  const box=document.getElementById("estado-eq"); if(!box) return;
+  const puedeGuardar = ok && o!==null && borrador.nombre.trim().length>=2 && borrador.manager.trim().length>=2;
+  box.innerHTML=`${sobran.length?`<div class="sobra">${sobran.map(j=>`${esc(j.nombre)} <button class="mini sec" data-q="${j.id}">Quitar</button>`).join(" ")}</div>`:""}
+    ${base?`<p class="small">Cambios: <strong>${nc}</strong> de ${S.config.max_cambios}</p>`:""}
+    ${ok?'<p class="ok-msg">Equipo válido.</p>':`<ul class="errs">${err.map(e=>`<li>${esc(e)}</li>`).join("")}</ul>`}
+    <div class="cols-nombres">
+      <div class="campo"><label for="nom-eq">Nombre del equipo</label><input id="nom-eq" maxlength="40" value="${esc(borrador.nombre)}" placeholder="Los Pataperros"></div>
+      <div class="campo"><label for="nom-man">Tu nombre o apodo</label><input id="nom-man" maxlength="30" value="${esc(borrador.manager)}" placeholder="Nombre o apodo"></div>
+    </div>
+    <div class="acciones"><button id="guardar" ${puedeGuardar?"":"disabled"}>Guardar mi equipo</button>
+    ${borrador.sucio?'<button class="sec" id="deshacer">Deshacer cambios</button>':""}
+    <span class="estado-guardado" id="msg-g">${msgGuardar?`<span class="${msgGuardar.ok?"ok-txt":"err-txt"}">${esc(msgGuardar.t)}</span>`:(borrador.sucio?'<span class="muted">Tienes cambios sin guardar.</span>':"")}</span></div>`;
+  box.querySelectorAll("button[data-q]").forEach(b=>b.addEventListener("click",()=>alternar(+b.dataset.q)));
+  const nom=box.querySelector("#nom-eq"), man=box.querySelector("#nom-man"), gb=box.querySelector("#guardar");
+  const chk=()=>{borrador.nombre=nom.value;borrador.manager=man.value;tocar();gb.disabled=!(ok&&o!==null&&nom.value.trim().length>=2&&man.value.trim().length>=2)};
+  nom.addEventListener("input",chk); man.addEventListener("input",chk);
+  gb.addEventListener("click",async()=>{
+    gb.disabled=true; document.getElementById("msg-g").textContent="Guardando…";
+    const {data,error}=await sb.rpc("guardar_equipo",{p_liga:ligaId, p_nombre:borrador.nombre.trim(), p_manager:borrador.manager.trim(), p_ids:borrador.ids, p_sistema:borrador.formacion});
+    if(error){ msgGuardar={ok:false,t:error.message}; pintarCampo(); cargarOcupados(); return; }
+    borrador.sucio=false; borrador.clave="";
+    await recargar();
+    msgGuardar={ok:true,t:`Guardado para la jornada ${data&&data.jornada}.`}; pintarCampo();
+  });
+  const dh=box.querySelector("#deshacer"); if(dh) dh.addEventListener("click",()=>{borrador.sucio=false;borrador.clave="";msgGuardar=null;render()});
+}
+
+/* ---------- jornadas ---------- */
+let jSel=null;
+const rkF={pos:"",club:"",pag:0};
+function rankingJugadores(n){
+  // n = número de jornada o "all" (temporada). Devuelve filas por jugador con puntos finales (con multiplicador).
+  const ns = n==="all" ? nums() : [n], acc=new Map();
+  ns.forEach(k=>{ const pts=S.jornadas[k].puntos;
+    Object.entries(pts).forEach(([id,p])=>{ const j=J.get(+id); if(!j) return;
+      let a=acc.get(j.id); if(!a){a={j,tot:0,bruto:0,pj:0,min:0,ult:null}; acc.set(j.id,a)}
+      a.tot+=ptsFinal(p,j); a.bruto+=p.t; a.min+=p.min||0; if((p.min||0)>0) a.pj++; a.ult=p; });
+  });
+  return [...acc.values()].sort((a,b)=>b.tot-a.tot);
+}
+function vJornadas(el){
+  const ns=nums();
+  if(!ns.length){el.innerHTML=`<h2>Jornadas</h2><div class="vacio">Aún no se ha cargado ninguna jornada.</div>`;return}
+  if(jSel!=="all" && !S.jornadas[jSel]) jSel=ns[ns.length-1];
+  const todo=jSel==="all", jor=todo?null:S.jornadas[jSel];
+  const rkJ=rankingJugadores(jSel);
+  const clubs=[...new Set(S.jugadores.map(j=>j.equipo))].sort((a,b)=>a.localeCompare(b,"es"));
+  let filtTodos=rkJ.filter(x=>(!rkF.pos||x.j.pos===rkF.pos)&&(!rkF.club||x.j.equipo===rkF.club));
+  if(rkF.club){ const ya=new Set(filtTodos.map(x=>x.j.id)); S.jugadores.filter(j=>j.equipo===rkF.club&&(!rkF.pos||j.pos===rkF.pos)&&!ya.has(j.id)).forEach(j=>filtTodos.push({j,tot:0,bruto:0,pj:0,min:0,ult:null,sin:true})); }
+  const POR_PAG=15, npag=Math.max(1,Math.ceil(filtTodos.length/POR_PAG));
+  if(rkF.pag>=npag) rkF.pag=npag-1;
+  const ini=rkF.club?0:rkF.pag*POR_PAG;
+  const filtrados=rkF.club?filtTodos:filtTodos.slice(ini,ini+POR_PAG);
+  // el once desastre: 4-4-2 con los mejores de cada posición (solo los que jugaron)
+  const jugaron=rkJ.filter(x=>x.pj>0);
+  const once={POR:1,DEF:4,MED:4,DEL:2};
+  const lineaO=p=>`<div class="linea">${jugaron.filter(x=>x.j.pos===p).slice(0,once[p]).map(x=>`<div class="ficha" title="${esc(x.j.nombre)} · ${esc(x.j.equipo)}">${camiseta(x.j.equipo,30)}<div class="fn">${jn(x.j)}</div><div class="fc">${esc(x.j.equipo)}</div><div class="fp ${x.tot>0?"pos":x.tot<0?"neg":""}">${x.tot>0?"+":""}${f1(x.tot)}</div></div>`).join("")}</div>`;
+  const rkE=(todo||!liga())?[]:S.equipos.map(eq=>({eq,r:puntosEquipo(eq,jSel)})).filter(x=>x.r).sort((a,b)=>b.r.total-a.r.total);
+  el.innerHTML=`<h2>${todo?"Toda la temporada":"Jornada "+jSel}</h2>
+  <div class="filtros" style="max-width:260px"><select id="jsel" aria-label="Elegir jornada"><option value="all"${todo?" selected":""}>Toda la temporada</option>${ns.map(n=>`<option value="${n}"${n===jSel?" selected":""}>Jornada ${n}</option>`).join("")}</select></div>
+  ${todo?"":(jor.avisos||[]).filter(a=>!/sin cuotas/.test(a)).map(a=>`<div class="aviso">${esc(a)}</div>`).join("")}
+  ${todo?"":`<h3 style="margin-top:16px">Partidos</h3>
+  <div class="partidos">${jor.partidos.map(p=>`<div class="partido"><div class="res"><span>${esc(p.local)} – ${esc(p.visitante)}</span><span>${p.goles_local!=null?p.goles_local+"-"+p.goles_visitante:esc(p.estado||"")}</span></div></div>`).join("")}</div>`}
+  <h3 style="margin-top:16px">El once desastre ${todo?"de la temporada":"de la jornada"}</h3>
+  <p class="small muted">Los que más Puntos Desastre han dado en cada posición, con el multiplicador estrella ya aplicado.</p>
+  <div class="once once-mini" role="img" aria-label="Once desastre">${["DEL","MED","DEF","POR"].map(lineaO).join("")}</div>
+  <h3>Ranking de jugadores</h3>
+  <div class="filtros" style="max-width:520px">
+    <select id="rk-pos" aria-label="Posición"><option value="">Todas las posiciones</option>${POSS.map(p=>`<option value="${p}"${rkF.pos===p?" selected":""}>${p}</option>`).join("")}</select>
+    <select id="rk-club" aria-label="Club"><option value="">Todos los clubes</option>${clubs.map(c=>`<option${rkF.club===c?" selected":""}>${esc(c)}</option>`).join("")}</select>
+  </div>
+  <div class="scroll"><table class="ranking"><thead><tr><th class="num">#</th><th>Jugador</th><th>Pos</th><th class="num">${todo?"Partidos":"Min"}</th><th class="num">Precio</th><th class="num">Puntos</th></tr></thead><tbody>
+  ${filtrados.map((x,i)=>`<tr><td class="num">${ini+i+1}</td><td><span class="jug">${camiseta(x.j.equipo,22)}<span>${jn(x.j)}<span class="muted small"> · ${esc(x.j.equipo)}</span></span></span></td>
+   <td><span class="tag ${x.j.pos}">${x.j.pos}</span></td><td class="num">${x.sin?"–":todo?x.pj:x.min}</td><td class="num">${M(x.j.precio)} <span class="muted small">${fx(mult(x.j))}</span></td><td class="num">${x.sin?'<span class="muted small">sin datos</span>':ptsHtml(x.tot)}</td></tr>`).join("")||'<tr><td colspan="6" class="muted">Ningún jugador con ese filtro.</td></tr>'}
+  </tbody></table></div>
+  ${!rkF.club&&npag>1?`<div class="pager"><button class="sec mini" id="rk-ini" ${rkF.pag===0?"disabled":""} aria-label="Primera página">«</button><button class="sec mini" id="rk-prev" ${rkF.pag===0?"disabled":""} aria-label="Página anterior">‹</button><span class="small">Página ${rkF.pag+1} de ${npag}</span><button class="sec mini" id="rk-next" ${rkF.pag>=npag-1?"disabled":""} aria-label="Página siguiente">›</button><button class="sec mini" id="rk-fin" ${rkF.pag>=npag-1?"disabled":""} aria-label="Última página">»</button></div>`:""}
+  ${(todo||!liga())?"":`<h3 style="margin-top:20px">Equipos de ${esc(liga().nombre)}</h3>
+  ${rkE.length?rkE.map(({eq,r})=>`<details class="eq"><summary><span class="n"><strong>${esc(eq.nombre)}</strong> <span class="muted small">${esc(eq.manager)}</span></span>${ptsHtml(r.total)}</summary>
+    ${r.vacio?'<p class="small muted">No presentó alineación esta jornada: −88.</p>':""}<div class="scroll"${r.vacio?" hidden":""}><table><thead><tr><th>Pos</th><th>Jugador</th><th class="num">Min</th><th>Desglose</th><th class="num">Puntos</th></tr></thead><tbody>
+    ${r.filas.sort((a,b)=>ptsFinal(b.p,b.j)-ptsFinal(a.p,a.j)).map(f=>`<tr><td><span class="tag ${f.j.pos}">${f.j.pos}</span></td><td>${jn(f.j)}<div class="muted small">${esc(f.j.equipo)}</div></td>
+    <td class="num">${f.p?f.p.min:"–"}</td><td class="desg">${f.p?f.p.d.map(([c,v])=>`${esc(c)} <span class="pts">${v>0?"+":""}${f1(v)}</span>`).join(" · ")+(f.p.t>0?` · <strong>Estrella ${fx(mult(f.j))}</strong>`:""):"Su equipo no jugó"}</td><td class="num">${f.p?ptsHtml(ptsFinal(f.p,f.j)):"0"}</td></tr>`).join("")}
+    </tbody></table></div></details>`).join(""):'<p class="muted">Ningún equipo estaba inscrito en esta jornada.</p>'}`}`;
+  el.querySelector("#jsel").addEventListener("change",e=>{jSel=e.target.value==="all"?"all":+e.target.value;rkF.pag=0;vJornadas(el)});
+  el.querySelector("#rk-pos").addEventListener("change",e=>{rkF.pos=e.target.value;rkF.pag=0;vJornadas(el)});
+  el.querySelector("#rk-club").addEventListener("change",e=>{rkF.club=e.target.value;rkF.pag=0;vJornadas(el)});
+  const irA=(p,id)=>{rkF.pag=p;vJornadas(el);const b=document.getElementById(id);if(b&&!b.disabled)b.focus();const r=document.querySelector(".ranking");if(r&&r.getBoundingClientRect().top<0)r.scrollIntoView({block:"start"});};
+  [["rk-ini",()=>0],["rk-prev",()=>rkF.pag-1],["rk-next",()=>rkF.pag+1],["rk-fin",()=>npag-1]].forEach(([id,f])=>{const b=el.querySelector("#"+id); if(b) b.addEventListener("click",()=>irA(f(),id));});
+}
+
+/* ---------- reglas ---------- */
+function vReglas(el){
+  const P=S.config.minimo, D=S.config.divisor;
+  const fila=(a,b)=>`<tr><td>${a}</td><td class="num">${b}</td></tr>`;
+  const n2=x=>(Math.round(x*100)/100).toLocaleString(LOC(),{minimumFractionDigits:2,maximumFractionDigits:2});
+  const sg=x=>(x>0?"+":x<0?"−":"")+n2(Math.abs(x));
+  const p2=x=>`<span class="pts ${x>0.0001?"pos":x<-0.0001?"neg":""}">${x>0.0001?"+":x<-0.0001?"−":""}${n2(Math.abs(x))}</span>`;
+  const res=(pg,pe)=>{const E=pg+0.5*pe; return {E, gana:10*(E-1), empata:10*(E-0.5), pierde:10*E};};
+  const rm=res(0.80,0.15), el_=res(0.05,0.15), be=res(0.40,0.30), se=res(0.30,0.30);
+  const ejemplo=(a,b,ra,rb)=>`<table class="tabla-ej"><thead><tr><th>Resultado</th><th class="num">${a}</th><th class="num">${b}</th></tr></thead><tbody>
+    <tr><td>Gana ${a}</td><td class="num">${p2(ra.gana)}</td><td class="num">${p2(rb.pierde)}</td></tr>
+    <tr><td>Empate</td><td class="num">${p2(ra.empata)}</td><td class="num">${p2(rb.empata)}</td></tr>
+    <tr><td>Gana ${b}</td><td class="num">${p2(ra.pierde)}</td><td class="num">${p2(rb.gana)}</td></tr></tbody></table>`;
+  // ejemplo completo: defensa de 60 M
+  const mEj=1+60/D, base=(6.5-5.8)*3+2+rm.pierde, fin=base*mEj;
+  el.innerHTML=`<h2>Reglas</h2><p class="sub">Gana quien más Puntos Desastre acumula: jugadores que juegan, pero juegan mal.</p>
+  <div class="cols"><div class="panel"><h3>Plantilla</h3><table><tbody>
+  ${fila("Sistema","4-4-2 o 4-3-3")}${fila("Porteros","1")}${fila("Defensas","4")}${fila("Centrocampistas","3 o 4")}${fila("Delanteros","2 o 3")}
+  ${fila("Gasto mínimo",M(P))}${fila("Gasto máximo","Sin límite")}${fila("Máximo por club","3")}${liga()?fila("Liga",esc(liga().nombre)):""}${fila("Modo",S.config.exclusivo?"Jugadores exclusivos":"Normal")}${fila("Cambios por jornada",S.config.exclusivo?"Sin límite (equipo nuevo cada jornada)":S.config.max_cambios)}</tbody></table></div>
+  <div class="panel"><h3>Puntos por partido</h3><table><tbody>
+  ${fila("No juega o no va convocado","−8")}${fila("Juega menos de 30 min","−3")}${fila("Rating","(6,5 − rating) × 3")}
+  ${fila("Gol de defensa / medio / delantero o portero","−6 / −5 / −4")}${fila("Asistencia","−3")}${fila("Portería a cero (POR/DEF, 60+ min)","−4")}
+  ${fila("Gol en propia","+6")}${fila("Comete penalti","+5")}${fila("Falla penalti","+6")}
+  ${fila("Amarilla","+2")}${fila("Doble amarilla","+5")}${fila("Roja directa","+7")}</tbody></table></div></div>
+
+  ${S.config.exclusivo?`<div class="panel" style="margin-top:16px"><h3>Jugadores exclusivos</h3><p class="small">En esta liga cada jugador solo puede estar en un equipo: se lo queda el primero que guarda su alineación con él. Cada jornada los equipos empiezan vacíos y hay que volver a montarlos antes de que empiece el primer partido. Quien no guarde alineación suma −88, como si sus 11 jugadores no hubieran jugado.</p></div>`:""}
+  <div class="panel" style="margin-top:16px"><h3>Rating</h3>
+  <p class="small">El rating es la nota que SofaScore pone a cada jugador en cada partido, de 3 a 10. Un 6,5 es un partido normal: no suma ni resta. Por cada punto por debajo de 6,5 sumas 3; por cada punto por encima, restas 3.</p>
+  <table class="tabla-ej"><thead><tr><th>Rating</th><th>Cuenta</th><th class="num">Puntos</th></tr></thead><tbody>
+  <tr><td>5,0 (partido malo)</td><td>(6,5 − 5,0) × 3</td><td class="num">${ptsHtml(4.5)}</td></tr>
+  <tr><td>6,0 (flojo)</td><td>(6,5 − 6,0) × 3</td><td class="num">${ptsHtml(1.5)}</td></tr>
+  <tr><td>6,5 (normal)</td><td>(6,5 − 6,5) × 3</td><td class="num">${ptsHtml(0)}</td></tr>
+  <tr><td>7,5 (bueno)</td><td>(6,5 − 7,5) × 3</td><td class="num">${ptsHtml(-3)}</td></tr>
+  <tr><td>9,0 (partidazo)</td><td>(6,5 − 9,0) × 3</td><td class="num">${ptsHtml(-7.5)}</td></tr></tbody></table></div>
+
+  <div class="panel" style="margin-top:16px"><h3>Resultado del equipo</h3>
+  <p class="small">Premia la <strong>sorpresa</strong>, no simplemente perder. Antes del partido, las cuotas de las casas de apuestas se convierten en probabilidades. Con ellas se calcula el resultado esperado de cada equipo, <span class="pts">E = P(gana) + 0,5 · P(empata)</span>, y se compara con el real, <span class="pts">A</span>, que vale 1 si gana, 0,5 si empata y 0 si pierde. Cada jugador que sale al campo suma <span class="pts">10 × (E − A)</span>.</p>
+  <div class="cols-ej">
+   <div><p class="small"><strong>Ejemplo 1: Real Madrid – Elche</strong> (gran favorito contra colista)<br>
+   Probabilidades: Madrid gana 80 %, empate 15 %, Elche gana 5 %.<br>
+   E Madrid = 0,80 + 0,5 × 0,15 = <strong>${n2(rm.E)}</strong> · E Elche = 0,05 + 0,5 × 0,15 = <strong>${n2(el_.E)}</strong></p>
+   ${ejemplo("Real Madrid","Elche",rm,el_)}
+   <p class="small muted">Si gana el Madrid, lo esperado, apenas se mueve nada. Si pierde, sus jugadores suman ${sg(rm.pierde)} cada uno.</p></div>
+   <div><p class="small"><strong>Ejemplo 2: Betis – Sevilla</strong> (partido igualado)<br>
+   Probabilidades: Betis gana 40 %, empate 30 %, Sevilla gana 30 %.<br>
+   E Betis = 0,40 + 0,5 × 0,30 = <strong>${n2(be.E)}</strong> · E Sevilla = 0,30 + 0,5 × 0,30 = <strong>${n2(se.E)}</strong></p>
+   ${ejemplo("Betis","Sevilla",be,se)}
+   <p class="small muted">En un partido igualado, perder da unos ${n2(be.pierde)} puntos y ganar quita más o menos lo mismo.</p></div>
+  </div>
+  <p class="small muted">Por eso fichar solo jugadores del colista no sirve: cuando pierden, era lo esperado y casi no suman.</p></div>
+
+  <div class="panel" style="margin-top:16px"><h3>Multiplicador estrella</h3><p class="small">Si un jugador termina la jornada en positivo (jugó mal), sus puntos se multiplican por <span class="pts">1 + precio / ${D}</span>. Si termina en negativo o no juega, no se multiplica.</p>
+  <table><tbody>${[1,20,60,150,237].map(p=>fila(p+" M",fx(1+p/D))).join("")}</tbody></table>
+  <p class="small muted">Fichar a una estrella es una apuesta: casi siempre resta lo normal, pero su mal día vale por muchos.</p></div>
+
+  <div class="panel" style="margin-top:16px"><h3>Ejemplo completo</h3>
+  <p class="small">Un defensa del Real Madrid que cuesta 60 M juega los 90 minutos contra el Elche y el Madrid pierde 0-1:</p>
+  <table class="tabla-ej"><tbody>
+  <tr><td>Rating 5,8</td><td class="num">${ptsHtml((6.5-5.8)*3)}</td></tr>
+  <tr><td>Amarilla</td><td class="num">${ptsHtml(2)}</td></tr>
+  <tr><td>Resultado: pierde siendo favorito (E = ${n2(rm.E)}, A = 0)</td><td class="num">${ptsHtml(rm.pierde)}</td></tr>
+  <tr><td><strong>Suma</strong></td><td class="num">${ptsHtml(base)}</td></tr>
+  <tr><td>Multiplicador estrella (1 + 60 / ${D})</td><td class="num">${fx(mEj)}</td></tr>
+  <tr><td><strong>Total de la jornada</strong></td><td class="num"><strong>${ptsHtml(fin)}</strong></td></tr></tbody></table>
+  <p class="small muted">Si ese mismo defensa hubiera hecho un buen partido (rating 7,5) y el Madrid ganara, sumaría ${ptsHtml(-3+rm.gana)}, sin multiplicador porque sale negativo.</p></div>`;
+}
+
+/* ---------- ligas ---------- */
+let msgLigas = null, nuevaLiga = null;
+function copiarBoton(texto, id){ return `<button class="mini sec" data-copiar="${esc(texto)}" id="${id}">Copiar</button>`; }
+function vLigas(el){
+  if(!user){ el.innerHTML=`<h2>Ligas</h2><div class="vacio">Para crear una liga o unirte a una, <a href="#entrar">entra o crea una cuenta</a>.</div>`; return; }
+  const l=liga(), adminL=soyAdminLiga();
+  const prop=new Map(S.propietarios.map(p=>[p.equipo_id,p.email]));
+  const conEquipo=new Set(S.propietarios.map(p=>String(p.email).toLowerCase()));
+  const sinEquipo=S.miembros.filter(m=>!conEquipo.has(String(m.email).toLowerCase()));
+  el.innerHTML=`<h2>Ligas</h2>
+  ${msgLigas?`<div class="aviso${msgLigas.ok?"":" err"}">${esc(msgLigas.t)}</div>`:""}
+  ${nuevaLiga?`<div class="panel nueva-liga"><h3>Liga creada: ${esc(nuevaLiga.nombre)}</h3>
+     <p class="small">Pasa este código a tus amigos. Con él entran en <strong>Ligas → Unirme con código</strong>.</p>
+     <div class="codigo-grande"><span id="cod-nueva">${esc(nuevaLiga.codigo)}</span>${copiarBoton(nuevaLiga.codigo,"cp-nueva")}</div></div>`:""}
+  <h3>Mis ligas</h3>
+  ${misLigas.length?`<div class="ligas-lista">${misLigas.map(x=>`<div class="liga-card${x.id===ligaId?" actual":""}">
+      <div class="liga-cab"><strong>${esc(x.nombre)}</strong>${x.rol==="admin"?' <span class="chip ok">admin</span>':""}${x.exclusivo?' <span class="chip">exclusiva</span>':""}</div>
+      <div class="small muted">Gasto mínimo ${M(x.minimo)} · ${x.exclusivo?"equipo nuevo cada jornada":`${x.max_cambios} cambios por jornada`} · multiplicador 1 + precio / ${+x.divisor}</div>
+      <div class="codigo-linea"><span class="small muted">Código</span> <code>${esc(x.codigo)}</code> ${copiarBoton(x.codigo,"cp-"+esc(x.id))}</div>
+      ${x.id===ligaId?'<span class="small ok-txt">Es la liga que estás viendo</span>':`<button class="mini" data-ver="${esc(x.id)}">Ver esta liga</button>`}
+    </div>`).join("")}</div>`:'<p class="muted">Todavía no estás en ninguna liga.</p>'}
+  <div class="cols" style="margin-top:16px">
+    <div class="panel"><h3>Unirme con código</h3>
+      <form id="f-unir" novalidate><div class="campo"><label for="u-cod">Código de la liga</label><input id="u-cod" placeholder="DSTR-XXXX" autocomplete="off" style="text-transform:uppercase"></div>
+      <button type="submit">Unirme</button></form></div>
+    <div class="panel"><h3>Crear una liga</h3>
+      <form id="f-crear" novalidate>
+        <div class="campo"><label for="c-nom">Nombre de la liga</label><input id="c-nom" maxlength="40" placeholder="Los del pueblo"></div>
+        <div class="cols-nombres">
+          <div class="campo"><label for="c-min">Gasto mínimo (M)</label><input id="c-min" type="number" min="0" step="5" value="375"></div>
+          <div class="campo"><label for="c-div">Divisor del multiplicador</label><input id="c-div" type="number" min="1" step="5" value="25"></div>
+          <div class="campo"><label for="c-camb">Cambios por jornada</label><input id="c-camb" type="number" min="0" max="11" value="2"></div>
+        </div>
+        <label class="check"><input type="checkbox" id="c-excl"> <span><strong>Jugadores exclusivos.</strong> Cada jugador solo puede estar en un equipo de la liga: se lo queda el primero que lo guarda. Cada jornada los equipos empiezan vacíos y hay que montarlos de nuevo (no hay límite de cambios). Si alguien no guarda alineación, suma −88.</span></label>
+        <p class="small muted">Con jugadores exclusivos, las estrellas se acaban pronto: conviene bajar el gasto mínimo (por ejemplo, a 250 M).</p>
+        <button type="submit">Crear liga</button></form></div>
+  </div>
+  ${l&&adminL?`<div class="panel" style="margin-top:16px"><h3>Gestionar ${esc(l.nombre)}</h3>
+    <div class="cols-nombres">
+      <div class="campo"><label for="g-min">Gasto mínimo (M)</label><input id="g-min" type="number" min="0" step="5" value="${l.minimo}"></div>
+      <div class="campo"><label for="g-div">Divisor del multiplicador</label><input id="g-div" type="number" min="1" step="5" value="${l.divisor}"></div>
+      <div class="campo"><label for="g-camb">Cambios por jornada</label><input id="g-camb" type="number" min="0" max="11" value="${l.max_cambios}"></div>
+    </div>
+    <p class="small muted">Modo de la liga: ${l.exclusivo?"jugadores exclusivos":"normal"} (se elige al crearla y no se puede cambiar).</p>
+    <button id="g-guardar">Guardar reglas</button>
+    <h3 style="margin-top:20px">Equipos y dueños</h3>
+    <p class="small muted">Los equipos nuevos se asignan solos a quien los crea. Aquí puedes asignar un equipo a otro correo o quitarlo de la liga. Un correo solo puede tener un equipo en cada liga.</p>
+    ${S.equipos.map(e=>`<div class="fila-admin dueno"><span><strong>${esc(e.nombre)}</strong> <span class="muted small">${esc(e.manager)}</span></span>
+      <span class="dueno-ctl"><input type="email" data-mail="${esc(e.id)}" value="${esc(prop.get(e.id)||"")}" placeholder="correo del dueño" aria-label="Correo del dueño de ${esc(e.nombre)}">
+      <button class="mini sec" data-gm="${esc(e.id)}">Guardar</button><button class="mini peligro" data-be="${esc(e.id)}">Quitar equipo</button></span></div>`).join("")||'<p class="muted small">Todavía no hay equipos.</p>'}
+    ${sinEquipo.length?`<p class="small" style="margin-top:12px">Miembros sin equipo: ${sinEquipo.map(m=>esc(m.email)).join(", ")}</p>`:""}
+    <h3 style="margin-top:20px">Borrar la liga</h3>
+    <p class="small muted">Se borran todos sus equipos y alineaciones. No se puede deshacer.</p>
+    <button class="peligro" id="g-borrar">Borrar ${esc(l.nombre)}</button>
+  </div>`:""}`;
+  el.querySelectorAll("[data-copiar]").forEach(b=>b.addEventListener("click",()=>{
+    const t=b.dataset.copiar;
+    navigator.clipboard.writeText(t).then(()=>{b.textContent="Copiado"}).catch(()=>{b.textContent=t});
+  }));
+  el.querySelectorAll("[data-ver]").forEach(b=>b.addEventListener("click",()=>{msgLigas=null;nuevaLiga=null;cambiarLiga(b.dataset.ver)}));
+  const aviso=(ok,t)=>{msgLigas={ok,t}; scrollTo(0,0); recargar();};
+  el.querySelector("#f-unir").addEventListener("submit",async e=>{
+    e.preventDefault(); const cod=el.querySelector("#u-cod").value.trim().toUpperCase();
+    if(!/^DSTR-[A-Z0-9]{4}$/.test(cod)){ msgLigas={ok:false,t:"El código tiene la forma DSTR-XXXX (cuatro letras o números)."}; vLigas(el); return; }
+    const {data,error}=await sb.rpc("unirse_liga",{p_codigo:cod});
+    if(error){ aviso(false,error.message); return; }
+    nuevaLiga=null; ligaId=data.id; guardaLocal("ld_liga",data.id);
+    aviso(true,`Te has unido a ${data.nombre}. Ahora monta tu equipo en Mi equipo.`);
+  });
+  el.querySelector("#f-crear").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const nombre=el.querySelector("#c-nom").value.trim();
+    if(nombre.length<3){ msgLigas={ok:false,t:"Ponle a la liga un nombre de al menos 3 caracteres."}; vLigas(el); return; }
+    const {data,error}=await sb.rpc("crear_liga",{p_nombre:nombre, p_minimo:+el.querySelector("#c-min").value||0, p_max_cambios:+el.querySelector("#c-camb").value||0,
+      p_divisor:+el.querySelector("#c-div").value||25, p_exclusivo:el.querySelector("#c-excl").checked});
+    if(error){ aviso(false,error.message); return; }
+    nuevaLiga=data; ligaId=data.id; guardaLocal("ld_liga",data.id); msgLigas=null; scrollTo(0,0); recargar();
+  });
+  if(l&&adminL){
+    el.querySelector("#g-guardar").addEventListener("click",async()=>{
+      const v={minimo:+el.querySelector("#g-min").value, divisor:+el.querySelector("#g-div").value, max_cambios:Math.max(0,Math.min(11,+el.querySelector("#g-camb").value||0))};
+      if(!(v.minimo>=0&&v.divisor>=1)){aviso(false,"Revisa los números: el divisor debe ser al menos 1.");return}
+      const {error}=await sb.from("ligas").update(v).eq("id",l.id);
+      aviso(!error, error?"No se pudieron guardar las reglas: "+error.message:"Reglas guardadas.");
+    });
+    el.querySelectorAll("[data-gm]").forEach(b=>b.addEventListener("click",async()=>{
+      const id=b.dataset.gm, mail=el.querySelector(`[data-mail="${id}"]`).value.trim().toLowerCase();
+      let error;
+      if(!mail) ({error}=await sb.from("propietarios").delete().eq("equipo_id",id));
+      else ({error}=await sb.from("propietarios").upsert({equipo_id:id,liga_id:l.id,email:mail},{onConflict:"equipo_id"}));
+      aviso(!error, error?(/duplicate|unique/i.test(error.message)?"Ese correo ya tiene otro equipo en esta liga.":"No se pudo guardar: "+error.message):(mail?"Dueño guardado.":"Dueño quitado."));
+    }));
+    el.querySelectorAll("[data-be]").forEach(b=>b.addEventListener("click",async()=>{
+      if(!b.dataset.c){b.dataset.c=1;b.textContent="¿Seguro?";return}
+      const {error}=await sb.from("equipos").delete().eq("id",b.dataset.be);
+      aviso(!error, error?"No se pudo quitar: "+error.message:"Equipo quitado de la liga.");
+    }));
+    el.querySelector("#g-borrar").addEventListener("click",async e=>{
+      const b=e.currentTarget; if(!b.dataset.c){b.dataset.c=1;b.textContent="Pulsa otra vez para borrarla del todo";return}
+      const {error}=await sb.from("ligas").delete().eq("id",l.id);
+      if(!error){ ligaId=null; guardaLocal("ld_liga",""); }
+      aviso(!error, error?"No se pudo borrar: "+error.message:"Liga borrada.");
+    });
+  }
+}
+
+/* ---------- admin del sitio ---------- */
+let msgAdmin = null;
+function vAdmin(el){
+  const ns=nums(), calN=Object.keys(S.cal).length, o=objetivo();
+  el.innerHTML=`<h2>Administración</h2>
+  ${msgAdmin?`<div class="aviso${msgAdmin.ok?"":" err"}">${esc(msgAdmin.t)}</div>`:""}
+  <div class="cols">
+   <div class="panel"><h3>Estado de los datos</h3>
+    <p class="small">${S.jugadores.length} jugadores · ${ns.length} jornada${ns.length===1?"":"s"} con puntos · calendario de ${calN} jornada${calN===1?"":"s"}.</p>
+    <p class="small">${o!==null?`Próximo cierre de alineaciones: <strong>jornada ${o}</strong>, ${esc(fecha(S.cal[o]))}.`:'<span class="err-txt">No hay ninguna jornada futura en el calendario: nadie puede guardar equipos. Ejecuta <code>python desastre.py calendario</code>.</span>'}</p>
+    ${ns.map(n=>`<div class="fila-admin"><span>Jornada ${n}</span><span class="muted small">${S.jornadas[n].actualizado?"actualizada "+esc(hace(S.jornadas[n].actualizado)):""}</span></div>`).join("")}
+    <p class="muted small" style="margin-top:10px">Los puntos los sube el script de tu ordenador. Si no puede, sube aquí los archivos a mano:</p>
+    <label for="fsubir">Subir jugadores.json o jornada_N.json</label><input type="file" id="fsubir" multiple accept=".json,application/json"></div>
+   <div class="panel"><h3>Corregir posición</h3>
+    <p class="small muted">Para jugadores mal clasificados por SofaScore. Vale para equipos nuevos y cambios en todas las ligas; los ya fichados mantienen la posición con la que se ficharon.</p>
+    <div class="campo"><label for="buscapos">Buscar jugador</label><input id="buscapos" type="search" placeholder="Yamal, Raphinha…" autocomplete="off"></div>
+    <div id="respos"></div></div>
+  </div>`;
+  const aviso=(ok,t)=>{msgAdmin={ok,t}; scrollTo(0,0); recargar();};
+  el.querySelector("#fsubir").addEventListener("change",async e=>{
+    const res=[];
+    for(const f of e.target.files){
+      try{
+        const d=JSON.parse(await f.text());
+        if(Array.isArray(d.jugadores)){
+          const rows=d.jugadores.map(j=>({id:j.id,nombre:j.nombre,equipo:j.equipo,equipo_id:j.equipo_id||null,pos:j.pos,precio:j.precio}));
+          for(let i=0;i<rows.length;i+=500){const {error}=await sb.from("jugadores").upsert(rows.slice(i,i+500),{onConflict:"id"}); if(error) throw error;}
+          res.push(`${f.name}: ${rows.length} jugadores`);
+        } else if(d.jornada&&d.puntos){
+          const row={n:d.jornada,partidos:d.partidos||[],puntos:d.puntos,avisos:d.avisos||[],actualizado:new Date().toISOString()};
+          if(d.inicio) row.inicio=d.inicio;
+          const {error}=await sb.from("jornadas").upsert(row,{onConflict:"n"}); if(error) throw error;
+          res.push(`${f.name}: jornada ${d.jornada}`);
+        } else throw new Error("no es un archivo de la liga");
+      }catch(err){res.push(`${f.name}: error (${err.message||err})`)}
+    }
+    aviso(!res.some(r=>r.includes("error")), "Subida: "+res.join(" · "));
+  });
+  const bp=el.querySelector("#buscapos"), rp=el.querySelector("#respos");
+  const norm=s=>String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  bp.addEventListener("input",()=>{
+    const q=norm(bp.value.trim()); if(q.length<2){rp.innerHTML="";return}
+    const l=S.jugadores.filter(j=>norm(j.nombre).includes(q)).slice(0,8);
+    rp.innerHTML=l.map(j=>`<div class="fila-admin"><span>${jn(j)} <span class="muted small">· ${esc(j.equipo)} · ${M(j.precio)}${j.pos_manual?` · corregido (SofaScore: ${j.pos_orig})`:""}</span></span>
+      <select data-pp="${j.id}" aria-label="Posición de ${esc(j.nombre)}" style="width:auto">${POSS.map(p=>`<option value="${p}"${p===j.pos?" selected":""}>${p}</option>`).join("")}</select></div>`).join("")||'<p class="muted small">Ningún jugador con ese nombre.</p>';
+    rp.querySelectorAll("[data-pp]").forEach(s=>s.addEventListener("change",async()=>{
+      const j=J.get(+s.dataset.pp); if(!j) return;
+      const val = s.value===j.pos_orig ? null : s.value;
+      const {error}=await sb.from("jugadores").update({pos_manual:val}).eq("id",j.id);
+      aviso(!error, error?"No se pudo cambiar: "+error.message:`${j.nombre} pasa a ${s.value}.`);
+    }));
+  });
+}
+
+/* ---------- entrar / registrarse ---------- */
+let modoEntrar = "entrar";
+function vEntrar(el){
+  if(user){ el.innerHTML=`<h2>Ya has entrado</h2><p>Has iniciado sesión como <strong>${esc(user.email)}</strong>. Ve a <a href="#ligas">Ligas</a> o a <a href="#fichar">Mi equipo</a>.</p>`; return; }
+  el.innerHTML=`<div class="panel entrar">
+    <div class="pestanas" role="tablist">
+      <button role="tab" class="${modoEntrar==="entrar"?"on":""}" data-m="entrar" aria-selected="${modoEntrar==="entrar"}">Entrar</button>
+      <button role="tab" class="${modoEntrar==="registro"?"on":""}" data-m="registro" aria-selected="${modoEntrar==="registro"}">Crear cuenta</button>
+    </div>
+    <form id="f-entrar" novalidate>
+      <div class="campo"><label for="e-mail">Correo</label><input id="e-mail" type="email" autocomplete="email" required></div>
+      <div class="campo"><label for="e-pass">Contraseña</label><input id="e-pass" type="password" autocomplete="${modoEntrar==="entrar"?"current-password":"new-password"}" minlength="6" required>
+        ${modoEntrar==="registro"?'<p class="muted small">Mínimo 6 caracteres. Tu correo no lo ve nadie más que el administrador.</p>':""}</div>
+      <button type="submit">${modoEntrar==="entrar"?"Entrar":"Crear cuenta"}</button>
+      <p class="small" id="e-msg" role="status"></p>
+      ${modoEntrar==="entrar"?'<p class="muted small">¿Has olvidado la contraseña? Pídele al administrador que te la restablezca.</p>':""}
+    </form></div>`;
+  el.querySelectorAll("[data-m]").forEach(b=>b.addEventListener("click",()=>{modoEntrar=b.dataset.m;vEntrar(el)}));
+  el.querySelector("#f-entrar").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const email=el.querySelector("#e-mail").value.trim(), password=el.querySelector("#e-pass").value, msg=el.querySelector("#e-msg");
+    if(!/^\S+@\S+\.\S+$/.test(email)){msg.className="small err-txt";msg.textContent="Escribe un correo válido.";return}
+    if(password.length<6){msg.className="small err-txt";msg.textContent="La contraseña debe tener al menos 6 caracteres.";return}
+    msg.className="small muted"; msg.textContent=modoEntrar==="entrar"?"Entrando…":"Creando la cuenta…";
+    const r = modoEntrar==="entrar" ? await sb.auth.signInWithPassword({email,password}) : await sb.auth.signUp({email,password});
+    if(r.error){
+      const m=r.error.message||"";
+      msg.className="small err-txt";
+      msg.textContent=/invalid login/i.test(m)?"Correo o contraseña incorrectos."
+        :/already registered|already been registered/i.test(m)?"Ese correo ya tiene cuenta. Usa la pestaña Entrar."
+        :/email not confirmed/i.test(m)?"Esta cuenta está pendiente de confirmar. Avisa al administrador."
+        :"No se pudo: "+m;
+      return;
+    }
+    if(modoEntrar==="registro" && !r.data.session){ msg.className="small";
+      msg.textContent="Cuenta creada, pero falta confirmarla por correo. Avisa al administrador (tiene que desactivar la confirmación de correo en Supabase)."; return; }
+    location.hash = "#clasificacion";
+  });
+}
+
+/* ---------- arranque ---------- */
+if(sb){
+  sb.auth.onAuthStateChange((ev,session)=>{
+    const antes=user&&user.id, ahora=session&&session.user&&session.user.id;
+    user=session?session.user:null;
+    if(antes!==ahora){ borrador.sucio=false; borrador.clave=""; ligaId=null; recargar(); }
+  });
+  sb.auth.getSession().then(({data})=>{ user=data.session?data.session.user:null; recargar(); });
+  setInterval(()=>{ if(document.visibilityState==="visible") recargar(true); }, 3*60*1000);
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible" && Date.now()-ultimaCarga>60*1000) recargar(true); });
+}
+render();
+})();
+
+</script>
+</body>
+</html>
