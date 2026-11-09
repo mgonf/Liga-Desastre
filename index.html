@@ -160,7 +160,7 @@ a.eq-link:hover{border-bottom-style:solid}
 button.jl{background:none;border:0;padding:0;margin:0;font:inherit;font-weight:inherit;color:inherit;cursor:pointer;text-align:inherit;border-radius:2px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:baseline;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:2px}
 button.jl:hover{text-decoration-color:currentColor}
 .baja{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:3px;font-size:12px;font-weight:800;line-height:1;margin-left:4px;vertical-align:-2px;flex:none;font-family:var(--f-body)}
-.baja-lesion{background:var(--accent);color:var(--accent-ink)}
+.baja-lesion{width:14px;height:14px}.baja-lesion svg{width:14px;height:14px;display:block}
 .baja-duda{background:var(--yellow);color:#1b1500}
 .baja-sancion{background:var(--accent);width:10px;height:14px;border-radius:2px;transform:rotate(8deg)}
 .leyenda{margin:-4px 0 10px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
@@ -330,7 +330,7 @@ const EN = {
 "Generar código":"Generate code","Hacer cambios a un equipo inscrito":"Change a registered team","Elige equipo…":"Choose team…",
 "Todas las posiciones":"All positions","Todos los clubes":"All clubs","Más caros primero":"Most expensive first","Más baratos primero":"Cheapest first","Por nombre":"By name",
 "Tu alineación":"Your line-up","Posición":"Position","Club":"Club","Buscar jugador":"Search player","Orden":"Sort","Equipo":"Team",
-"Vaciar":"Clear","Equipo válido.":"Valid team.","Lleno":"Full","Quitar":"Remove","Copiar código":"Copy code","Código para el administrador":"Code for the admin",
+"Vaciar":"Clear","Equipo válido.":"Valid team.","Completo":"Full","Quitar":"Remove","Copiar código":"Copy code","Código para el administrador":"Code for the admin",
 "Copiado. Mándalo por WhatsApp al administrador.":"Copied. Send it to the admin on WhatsApp.","Selecciónalo y cópialo a mano.":"Select it and copy it by hand.",
 "Aún no has fichado a nadie.":"You haven't signed anyone yet.","Toda la temporada":"Whole season","Partidos":"Matches",
 "El once desastre de la jornada":"Disaster XI of the matchday","El once desastre de la temporada":"Disaster XI of the season",
@@ -439,13 +439,21 @@ Object.assign(EN, {
 "Estado de los datos":"Data status","Corregir posición":"Fix position","Subir jugadores.json o jornada_N.json":"Upload jugadores.json or jornada_N.json",
 "Los puntos los sube el script de tu ordenador. Si no puede, sube aquí los archivos a mano:":"Points are uploaded by the script on your computer. If it can't, upload the files here by hand:",
 "Para jugadores mal clasificados por SofaScore. Vale para equipos nuevos y cambios en todas las ligas; los ya fichados mantienen la posición con la que se ficharon.":"For players SofaScore classifies wrongly. It applies to new teams and changes in every league; players already signed keep the position they were signed in.",
-"¿Has olvidado la contraseña? Pídele al administrador que te la restablezca.":"Forgot your password? Ask the admin to reset it.",
+"¿Has olvidado la contraseña?":"Forgot your password?","Volver a entrar":"Back to log in","Enviar enlace":"Send link","Enviando…":"Sending…","Guardando…":"Saving…",
+"Escribe tu correo y te mandamos un enlace para poner una contraseña nueva.":"Enter your email and we'll send you a link to set a new password.",
+"Si ese correo tiene cuenta, te hemos mandado un enlace. Mira también en spam.":"If that email has an account, we've sent you a link. Check spam too.",
+"Espera un minuto y vuelve a probar.":"Wait a minute and try again.","Nueva contraseña":"New password","Escribe tu nueva contraseña":"Enter your new password",
+"Mínimo 6 caracteres.":"At least 6 characters.","Guardar contraseña":"Save password","Contraseña cambiada.":"Password changed.",
+"Reenviar correo":"Resend email","Correo reenviado. Mira también en spam.":"Email resent. Check spam too.",
+"Todavía no has confirmado tu correo. Busca el mensaje de Liga Desastre (mira también en spam) y pulsa el enlace.":"You haven't confirmed your email yet. Find the Liga Desastre message (check spam too) and click the link.",
+"Mínimo 6 caracteres. Te mandaremos un correo para confirmar que es tuyo. Tu correo no lo ve nadie más que el administrador.":"At least 6 characters. We'll email you to confirm it's yours. Nobody but the admin sees your email.",
 "Mínimo 6 caracteres. Tu correo no lo ve nadie más que el administrador.":"At least 6 characters. Nobody but the admin sees your email.",
 "Correo o contraseña incorrectos.":"Wrong email or password.","Ese correo ya tiene cuenta. Usa la pestaña Entrar.":"That email already has an account. Use the Log in tab.",
 "Escribe un correo válido.":"Enter a valid email.","La contraseña debe tener al menos 6 caracteres.":"The password must have at least 6 characters.","Entrando…":"Logging in…","Creando la cuenta…":"Creating the account…",
 "Ya has entrado":"You're logged in","admin":"admin","exclusiva":"exclusive","Ninguno.":"None."
 });
 EN_RE.push(
+ [/^Casi está\. Te hemos mandado un correo a (.+)\. Pulsa el enlace que trae y ya podrás entrar\. Si no lo ves, mira en spam\.$/, "Almost done. We've sent an email to $1. Click its link and you can log in. If you don't see it, check spam."],
  [/^Gasto mínimo (.+) · equipo nuevo cada jornada · multiplicador 1 \+ precio \/ (.+)$/, "Minimum spend $1 · new team every matchday · multiplier 1 + price / $2"],
  [/^Gasto mínimo (.+) · (\d+) cambios por jornada · multiplicador 1 \+ precio \/ (.+)$/, "Minimum spend $1 · $2 changes per matchday · multiplier 1 + price / $3"],
  [/^Alineación para la jornada (\d+)\.$/, "Line-up for matchday $1."], [/^Puedes cambiarla hasta el (.+)\.$/, "You can change it until $1."],
@@ -487,7 +495,7 @@ new MutationObserver(ms=>{ if(LANG!=="en") return; ms.forEach(m=>{ if(m.type==="
 document.documentElement.lang=LANG;
 
 /* ---------- ficha de jugador ---------- */
-const BAJAS = {lesion:["Lesionado","+"], duda:["Duda","?"], sancion:["Sancionado",""]};
+const BAJAS = {lesion:["Lesionado",'<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M5 1h4v4h4v4H9v4H5V9H1V5h4z" fill="#e0201b"/></svg>'], duda:["Duda","?"], sancion:["Sancionado",""]};
 const marcaBaja = j => { const b=j&&BAJAS[j.baja]; return b ? `<span class="baja baja-${j.baja}" title="${esc(b[0]+(j.baja_info?": "+j.baja_info:""))}" aria-label="${esc(b[0])}">${b[1]}</span>` : ""; };
 const jn = j => j ? `<button type="button" class="jl" data-pj="${j.id}" aria-label="Ver ficha de ${esc(j.nombre)}">${esc(j.nombre)}</button>${marcaBaja(J.get(j.id)||j)}` : "";
 let modalPrevio = null;
@@ -735,7 +743,7 @@ function vFichar(el){
     : `<div class="aviso">Ahora mismo no hay ninguna jornada abierta para fichar. Vuelve cuando el administrador cargue el calendario de la siguiente.</div>`;
   el.innerHTML=`<h2>Mi equipo</h2>
   ${plazo}
-  <p class="leyenda small muted"><span class="baja baja-lesion">+</span> lesionado · <span class="baja baja-duda">?</span> duda · <span class="baja baja-sancion"></span> sancionado <span class="muted">(según SofaScore para su próximo partido)</span></p>
+  <p class="leyenda small muted"><span class="baja baja-lesion">${BAJAS.lesion[1]}</span> lesionado · <span class="baja baja-duda">?</span> duda · <span class="baja baja-sancion"></span> sancionado <span class="muted">(según SofaScore para su próximo partido)</span></p>
   <p class="sub">Elige el sistema y rellena los 11 huecos: pulsa un hueco vacío para ver jugadores de esa posición, o arrastra un jugador desde la lista. Gasta al menos ${M(S.config.minimo)} y no repitas más de 3 de un mismo club.${base?` Puedes hacer hasta ${S.config.max_cambios} cambios por jornada.`:""}</p>
   <div class="fichar">
     <section class="col-campo">
@@ -780,7 +788,7 @@ function pintarLista(){
     const esta=sel.has(j.id), ocup=!esta&&ocupados.has(j.id), puede=esta||(libre[j.pos]&&!ocup);
     return `<div class="fila-j${puede&&!esta?" arrastrable":""}"${puede&&!esta?` draggable="true" data-drag="${j.id}"`:""}>${camiseta(j.equipo,24)}<span class="tag ${j.pos}">${j.pos}</span>
     <span class="nom">${jn(j)} <span class="muted small">· ${esc(j.equipo)}</span></span><span class="num">${M(j.precio)} <span class="muted small">${fx(mult(j))}</span></span>
-    <button class="mini ${esta?"peligro":"sec"}" data-id="${j.id}" ${puede?"":"disabled"} aria-label="${esta?"Quitar":"Fichar"} ${esc(j.nombre)}">${esta?"Quitar":ocup?"Ocupado":puede?"Fichar":"Lleno"}</button></div>`}).join("")
+    <button class="mini ${esta?"peligro":"sec"}" data-id="${j.id}" ${puede?"":"disabled"} aria-label="${esta?"Quitar":"Fichar"} ${esc(j.nombre)}">${esta?"Quitar":ocup?"Ocupado":puede?"Fichar":"Completo"}</button></div>`}).join("")
     +(total>200?`<p class="muted small" style="padding:8px 4px">Mostrando 200 de ${total}. Filtra para ver el resto.</p>`:"")
     +(!total?`<p class="muted small" style="padding:8px 4px">Ningún jugador coincide con el filtro.</p>`:"");
   box.querySelectorAll("button[data-id]").forEach(b=>b.addEventListener("click",()=>alternar(+b.dataset.id)));
@@ -1153,42 +1161,85 @@ function vAdmin(el){
   });
 }
 
-/* ---------- entrar / registrarse ---------- */
-let modoEntrar = "entrar";
+/* ---------- entrar / registrarse / contraseña ---------- */
+let modoEntrar = "entrar", recuperando = false;
+const urlWeb = () => location.origin + location.pathname;
 function vEntrar(el){
+  if(recuperando && user){
+    el.innerHTML=`<div class="panel entrar"><h2>Nueva contraseña</h2>
+      <form id="f-nueva" novalidate>
+        <div class="campo"><label for="n-pass">Escribe tu nueva contraseña</label><input id="n-pass" type="password" autocomplete="new-password" minlength="6" required>
+        <p class="muted small">Mínimo 6 caracteres.</p></div>
+        <button type="submit">Guardar contraseña</button>
+        <p class="small" id="e-msg" role="status"></p>
+      </form></div>`;
+    el.querySelector("#f-nueva").addEventListener("submit",async e=>{
+      e.preventDefault();
+      const password=el.querySelector("#n-pass").value, msg=el.querySelector("#e-msg");
+      if(password.length<6){msg.className="small err-txt";msg.textContent="La contraseña debe tener al menos 6 caracteres.";return}
+      msg.className="small muted"; msg.textContent="Guardando…";
+      const {error}=await sb.auth.updateUser({password});
+      if(error){msg.className="small err-txt";msg.textContent="No se pudo: "+error.message;return}
+      recuperando=false; msg.className="small ok-txt"; msg.textContent="Contraseña cambiada.";
+      setTimeout(()=>{location.hash="#fichar"},1200);
+    });
+    return;
+  }
   if(user){ el.innerHTML=`<h2>Ya has entrado</h2><p>Has iniciado sesión como <strong>${esc(user.email)}</strong>. Ve a <a href="#ligas">Ligas</a> o a <a href="#fichar">Mi equipo</a>.</p>`; return; }
+  const olvido = modoEntrar==="olvido";
   el.innerHTML=`<div class="panel entrar">
     <div class="pestanas" role="tablist">
       <button role="tab" class="${modoEntrar==="entrar"?"on":""}" data-m="entrar" aria-selected="${modoEntrar==="entrar"}">Entrar</button>
       <button role="tab" class="${modoEntrar==="registro"?"on":""}" data-m="registro" aria-selected="${modoEntrar==="registro"}">Crear cuenta</button>
     </div>
     <form id="f-entrar" novalidate>
+      ${olvido?'<p>Escribe tu correo y te mandamos un enlace para poner una contraseña nueva.</p>':""}
       <div class="campo"><label for="e-mail">Correo</label><input id="e-mail" type="email" autocomplete="email" required></div>
-      <div class="campo"><label for="e-pass">Contraseña</label><input id="e-pass" type="password" autocomplete="${modoEntrar==="entrar"?"current-password":"new-password"}" minlength="6" required>
-        ${modoEntrar==="registro"?'<p class="muted small">Mínimo 6 caracteres. Tu correo no lo ve nadie más que el administrador.</p>':""}</div>
-      <button type="submit">${modoEntrar==="entrar"?"Entrar":"Crear cuenta"}</button>
+      ${olvido?"":`<div class="campo"><label for="e-pass">Contraseña</label><input id="e-pass" type="password" autocomplete="${modoEntrar==="entrar"?"current-password":"new-password"}" minlength="6" required>
+        ${modoEntrar==="registro"?'<p class="muted small">Mínimo 6 caracteres. Te mandaremos un correo para confirmar que es tuyo. Tu correo no lo ve nadie más que el administrador.</p>':""}</div>`}
+      <button type="submit">${olvido?"Enviar enlace":modoEntrar==="entrar"?"Entrar":"Crear cuenta"}</button>
       <p class="small" id="e-msg" role="status"></p>
-      ${modoEntrar==="entrar"?'<p class="muted small">¿Has olvidado la contraseña? Pídele al administrador que te la restablezca.</p>':""}
+      ${modoEntrar==="entrar"?'<p class="small"><a href="#entrar" data-m="olvido">¿Has olvidado la contraseña?</a></p>':""}
+      ${olvido?'<p class="small"><a href="#entrar" data-m="entrar">Volver a entrar</a></p>':""}
     </form></div>`;
-  el.querySelectorAll("[data-m]").forEach(b=>b.addEventListener("click",()=>{modoEntrar=b.dataset.m;vEntrar(el)}));
+  el.querySelectorAll("[data-m]").forEach(b=>b.addEventListener("click",ev=>{ev.preventDefault();modoEntrar=b.dataset.m;vEntrar(el)}));
   el.querySelector("#f-entrar").addEventListener("submit",async e=>{
     e.preventDefault();
-    const email=el.querySelector("#e-mail").value.trim(), password=el.querySelector("#e-pass").value, msg=el.querySelector("#e-msg");
+    const email=el.querySelector("#e-mail").value.trim(), msg=el.querySelector("#e-msg");
+    const pi=el.querySelector("#e-pass"), password=pi?pi.value:"";
     if(!/^\S+@\S+\.\S+$/.test(email)){msg.className="small err-txt";msg.textContent="Escribe un correo válido.";return}
+    if(olvido){
+      msg.className="small muted"; msg.textContent="Enviando…";
+      const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:urlWeb()});
+      if(error){msg.className="small err-txt";msg.textContent=/rate|seconds/i.test(error.message)?"Espera un minuto y vuelve a probar.":"No se pudo: "+error.message;return}
+      msg.className="small ok-txt"; msg.textContent="Si ese correo tiene cuenta, te hemos mandado un enlace. Mira también en spam.";
+      return;
+    }
     if(password.length<6){msg.className="small err-txt";msg.textContent="La contraseña debe tener al menos 6 caracteres.";return}
     msg.className="small muted"; msg.textContent=modoEntrar==="entrar"?"Entrando…":"Creando la cuenta…";
-    const r = modoEntrar==="entrar" ? await sb.auth.signInWithPassword({email,password}) : await sb.auth.signUp({email,password});
+    const r = modoEntrar==="entrar" ? await sb.auth.signInWithPassword({email,password})
+      : await sb.auth.signUp({email,password,options:{emailRedirectTo:urlWeb()}});
     if(r.error){
       const m=r.error.message||"";
       msg.className="small err-txt";
+      if(/email not confirmed/i.test(m)){
+        msg.innerHTML=`Todavía no has confirmado tu correo. Busca el mensaje de Liga Desastre (mira también en spam) y pulsa el enlace. <button type="button" class="mini sec" id="reenviar">Reenviar correo</button>`;
+        msg.querySelector("#reenviar").addEventListener("click",async()=>{
+          const {error}=await sb.auth.resend({type:"signup",email,options:{emailRedirectTo:urlWeb()}});
+          msg.className=error?"small err-txt":"small ok-txt";
+          msg.textContent=error?(/rate|seconds/i.test(error.message)?"Espera un minuto y vuelve a probar.":"No se pudo: "+error.message):"Correo reenviado. Mira también en spam.";
+        });
+        return;
+      }
       msg.textContent=/invalid login/i.test(m)?"Correo o contraseña incorrectos."
         :/already registered|already been registered/i.test(m)?"Ese correo ya tiene cuenta. Usa la pestaña Entrar."
-        :/email not confirmed/i.test(m)?"Esta cuenta está pendiente de confirmar. Avisa al administrador."
+        :/rate|seconds/i.test(m)?"Espera un minuto y vuelve a probar."
         :"No se pudo: "+m;
       return;
     }
-    if(modoEntrar==="registro" && !r.data.session){ msg.className="small";
-      msg.textContent="Cuenta creada, pero falta confirmarla por correo. Avisa al administrador (tiene que desactivar la confirmación de correo en Supabase)."; return; }
+    if(modoEntrar==="registro" && !r.data.session){
+      msg.className="small ok-txt";
+      msg.textContent=`Casi está. Te hemos mandado un correo a ${email}. Pulsa el enlace que trae y ya podrás entrar. Si no lo ves, mira en spam.`; return; }
     location.hash = "#clasificacion";
   });
 }
@@ -1198,6 +1249,7 @@ if(sb){
   sb.auth.onAuthStateChange((ev,session)=>{
     const antes=user&&user.id, ahora=session&&session.user&&session.user.id;
     user=session?session.user:null;
+    if(ev==="PASSWORD_RECOVERY"){ recuperando=true; history.replaceState(null,"",location.pathname+"#entrar"); render(); }
     if(antes!==ahora){ borrador.sucio=false; borrador.clave=""; ligaId=null; recargar(); }
   });
   sb.auth.getSession().then(({data})=>{ user=data.session?data.session.user:null; recargar(); });
