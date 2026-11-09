@@ -87,6 +87,8 @@ fieldset.elige legend{font-size:12px;font-weight:700;text-transform:uppercase;le
 .opc{text-transform:none;letter-spacing:normal;font-size:14px;font-weight:400;color:var(--ink)}
 .opc input{margin-top:3px;width:auto;flex:none}
 .opc strong{font-weight:700}.opc .small{font-weight:400;text-transform:none;letter-spacing:normal}.opc>span{display:flex;flex-direction:column;gap:2px}
+.ej-dos th.col-tu,.ej-dos td:nth-child(2){}
+.ej-dos thead th{white-space:nowrap}
 .des-grid-wrap{max-width:1000px;margin:40px auto 0}
 .des-grid-wrap .des-cab{margin-bottom:12px}
 .des-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
@@ -538,6 +540,8 @@ Object.assign(EN, {
 "La nota ya resume todo el partido: goles, pases, tarjetas, errores…":"The rating already sums up the whole match: goals, passes, cards, errors…",
 "Más sencilla y sin contar nada dos veces.":"Simpler, and nothing counts twice.",
 "En las dos: no jugar resta −8, jugar menos de 30 minutos resta −3 y se aplica el multiplicador estrella.":"In both: not playing is −8, playing under 30 minutes is −3, and the star multiplier applies.",
+"Un defensa del Real Madrid que cuesta 60 M juega los 90 minutos contra el Elche. Ve una amarilla, da un mal pase atrás que acaba en gol y el Madrid pierde 0-1:":"A Real Madrid defender priced at 60M plays all 90 minutes against Elche. He gets a yellow card, plays a bad back-pass that leads to a goal, and Madrid lose 0-1:",
+"Error que acaba en gol":"Error leading to a goal","En la clásica, la amarilla y el error no suman aparte: ya le bajan la nota de SofaScore.":"In classic, the yellow card and the error don't count separately: they already lower his SofaScore rating.",
 "Momentos desastre":"Disaster moments","· así se juega aquí":"· that's how we play here","Así se juega aquí.":"That's how we play here.","vacía":"empty",
 "Falla el penalti decisivo de la final del Mundial y lo manda por encima del larguero.":"Misses the deciding penalty of the World Cup final, blasting it over the bar.",
 "Dos errores clamorosos en la final de la Champions de Kiev ante el Real Madrid.":"Two howlers in the Champions League final in Kyiv against Real Madrid.",
@@ -561,6 +565,7 @@ Object.assign(EN, {
 "Ya has entrado":"You're logged in","admin":"admin","exclusiva":"exclusive","Ninguno.":"None."
 });
 EN_RE.push(
+ [/^Si ese mismo defensa hubiera hecho un buen partido \(rating 7,5\) y el Madrid ganara, sumaría (.+) en desastre total y (.+) en clásica, sin multiplicador porque sale negativo\.$/, "If the same defender had played well (rating 7.5) and Madrid won, he'd score $1 in total disaster and $2 in classic, with no multiplier because it's negative."],
  [/^Tu liga \((.+)\) usa la puntuación (clásica|desastre total)\.$/, (m,a,b)=>`Your league (${a}) uses ${b==="clásica"?"classic":"total disaster"} scoring.`],
  [/^Solo puedes hacer los cambios por jornada que marque la liga(?: \(en la tuya, (\d+)\))?\.$/, (m,n)=>"You can only make the changes per matchday the league allows"+(n?` (${n} in yours)`:"")+"."],
  [/^Tu liga \((.+)\) está en modo (normal|jugadores exclusivos)\.$/, (m,a,b)=>`Your league (${a}) is in ${b==="normal"?"normal":"exclusive players"} mode.`],
@@ -1073,7 +1078,7 @@ function vReglas(el){
     <tr><td>Empate</td><td class="num">${p2(ra.empata)}</td><td class="num">${p2(rb.empata)}</td></tr>
     <tr><td>Gana ${b}</td><td class="num">${p2(ra.pierde)}</td><td class="num">${p2(rb.gana)}</td></tr></tbody></table>`;
   // ejemplo completo: defensa de 60 M
-  const mEj=1+60/D, base=(6.5-5.8)*RM+(CL?0:2)+rm.pierde, fin=base*mEj;
+  const mEj=1+60/D, baseT=(6.5-5.8)*3+2+5+rm.pierde, baseC=(6.5-5.8)*4+rm.pierde, finT=baseT*mEj, finC=baseC*mEj;
   el.innerHTML=`<h2>Reglas</h2><p class="sub">Gana quien más Puntos Desastre acumula: jugadores que juegan, pero juegan mal.</p>
   <div class="cols"><div class="panel"><h3>Plantilla</h3><table><tbody>
   ${fila("Sistema","4-4-2 o 4-3-3")}${fila("Porteros","1")}${fila("Defensas","4")}${fila("Centrocampistas","3 o 4")}${fila("Delanteros","2 o 3")}
@@ -1138,15 +1143,17 @@ function vReglas(el){
   <p class="small muted">Fichar a una estrella es una apuesta: casi siempre resta lo normal, pero su mal día vale por muchos.</p></div>
 
   <div class="panel" style="margin-top:16px"><h3>Ejemplo completo</h3>
-  <p class="small">Un defensa del Real Madrid que cuesta 60 M juega los 90 minutos contra el Elche y el Madrid pierde 0-1:</p>
-  <table class="tabla-ej"><tbody>
-  <tr><td>Rating 5,8</td><td class="num">${ptsHtml((6.5-5.8)*RM)}</td></tr>
-  ${CL?"":`<tr><td>Amarilla</td><td class="num">${ptsHtml(2)}</td></tr>`}
-  <tr><td>Resultado: pierde siendo favorito (E = ${n2(rm.E)}, A = 0)</td><td class="num">${ptsHtml(rm.pierde)}</td></tr>
-  <tr><td><strong>Suma</strong></td><td class="num">${ptsHtml(base)}</td></tr>
-  <tr><td>Multiplicador estrella (1 + 60 / ${D})</td><td class="num">${fx(mEj)}</td></tr>
-  <tr><td><strong>Total de la jornada</strong></td><td class="num"><strong>${ptsHtml(fin)}</strong></td></tr></tbody></table>
-  <p class="small muted">Si ese mismo defensa hubiera hecho un buen partido (rating 7,5) y el Madrid ganara, sumaría ${ptsHtml(-RM+rm.gana)}, sin multiplicador porque sale negativo.</p></div>`;
+  <p class="small">Un defensa del Real Madrid que cuesta 60 M juega los 90 minutos contra el Elche. Ve una amarilla, da un mal pase atrás que acaba en gol y el Madrid pierde 0-1:</p>
+  <table class="tabla-ej ej-dos"><thead><tr><th></th><th class="num${CL?"":" col-tu"}">Desastre total${liga()&&!CL?' <span class="chip ok">tu liga</span>':""}</th><th class="num${CL?" col-tu":""}">Clásica${liga()&&CL?' <span class="chip ok">tu liga</span>':""}</th></tr></thead><tbody>
+  <tr><td>Rating 5,8</td><td class="num">(6,5 − 5,8) × 3 = ${ptsHtml((6.5-5.8)*3)}</td><td class="num">(6,5 − 5,8) × 4 = ${ptsHtml((6.5-5.8)*4)}</td></tr>
+  <tr><td>Amarilla</td><td class="num">${ptsHtml(2)}</td><td class="num muted">—</td></tr>
+  <tr><td>Error que acaba en gol</td><td class="num">${ptsHtml(5)}</td><td class="num muted">—</td></tr>
+  <tr><td>Resultado: pierde siendo favorito (E = ${n2(rm.E)}, A = 0)</td><td class="num">${ptsHtml(rm.pierde)}</td><td class="num">${ptsHtml(rm.pierde)}</td></tr>
+  <tr><td><strong>Suma</strong></td><td class="num">${ptsHtml(baseT)}</td><td class="num">${ptsHtml(baseC)}</td></tr>
+  <tr><td>Multiplicador estrella (1 + 60 / ${D})</td><td class="num">${fx(mEj)}</td><td class="num">${fx(mEj)}</td></tr>
+  <tr><td><strong>Total de la jornada</strong></td><td class="num"><strong>${ptsHtml(finT)}</strong></td><td class="num"><strong>${ptsHtml(finC)}</strong></td></tr></tbody></table>
+  <p class="small muted">En la clásica, la amarilla y el error no suman aparte: ya le bajan la nota de SofaScore.</p>
+  <p class="small muted">Si ese mismo defensa hubiera hecho un buen partido (rating 7,5) y el Madrid ganara, sumaría ${sg(-3+rm.gana)} en desastre total y ${sg(-4+rm.gana)} en clásica, sin multiplicador porque sale negativo.</p></div>`;
 }
 
 /* ---------- ligas ---------- */
