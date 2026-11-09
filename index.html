@@ -64,17 +64,21 @@ details.mas[open] summary{margin-bottom:10px}
 .desastres{display:none}
 .des-movil .desastres{display:block;margin:32px auto 0;max-width:420px}
 @media (min-width:1420px){
-  .desastres{display:block;position:fixed;top:140px;width:min(220px,calc((100vw - 1100px)/2 - 40px))}
+  .desastres{display:flex;flex-direction:column;gap:12px;position:fixed;top:130px;width:min(240px,calc((100vw - 1100px)/2 - 40px));max-height:calc(100vh - 150px);overflow:hidden}
   .des-izq{left:20px}.des-der{right:20px}.des-movil{display:none}}
-.des-cab{font-family:var(--f-display);text-transform:uppercase;font-size:18px;margin:0 0 8px;border-bottom:3px solid var(--ink);padding-bottom:4px}
-.des-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;min-height:250px}
-.des-movil .des-card{min-height:0}
-.des-ilu{color:var(--ink);background:var(--sunk);border-radius:calc(var(--r) - 2px);padding:8px;margin-bottom:10px}
-.des-ilu svg{display:block;width:100%;height:auto}
-.des-q{font-weight:700;margin:0 0 4px;font-size:14px}
-.des-t{margin:0;font-size:13px;color:var(--muted)}
-.des-pie{font-size:12px;color:var(--muted);margin:6px 0 0;font-style:italic}
-@media (prefers-reduced-motion:no-preference){.des-card>*{animation:desin .5s ease}}
+@media (min-width:1420px) and (max-height:780px){.desastres .des-card:nth-of-type(2){display:none}}
+.des-cab{font-family:var(--f-display);font-weight:400;text-transform:uppercase;font-size:17px;white-space:nowrap;letter-spacing:.01em;margin:0;border-bottom:3px solid var(--ink);padding-bottom:4px}
+.des-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column}
+.des-ilu{color:var(--ink);background:var(--sunk);border-radius:calc(var(--r) - 2px);padding:6px 10px;margin-bottom:8px}
+.des-ilu svg{display:block;width:100%;height:auto;max-height:90px}
+.des-q{font-weight:700;margin:0 0 4px;font-size:13px}
+.des-t{margin:0 0 8px;font-size:13px;color:var(--muted);line-height:1.4}
+.des-yt{margin-top:auto;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none}
+.des-yt:hover{text-decoration:underline}
+.des-grid-wrap{max-width:1000px;margin:40px auto 0}
+.des-grid-wrap .des-cab{margin-bottom:12px}
+.des-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+@media (prefers-reduced-motion:no-preference){.des-card>*{animation:desin .6s ease}}
 @keyframes desin{from{opacity:0}to{opacity:1}}
 
 nav.tabs{display:flex;flex-wrap:wrap;gap:4px}
@@ -484,7 +488,7 @@ Object.assign(EN, {
 "Para jugar necesitas una liga. Crea la tuya y pasa el código a tus amigos, o únete con el código que te hayan dado.":"To play you need a league. Create yours and share the code with your friends, or join with the code you were given.",
 "Más opciones":"More options","Podrás cambiar estas reglas después, menos el modo exclusivo.":"You can change these rules later, except exclusive mode.",
 "Unirme a una liga":"Join a league","Te lo pasa quien creó la liga. Tiene la forma DSTR- y cuatro letras o números.":"The league creator gives it to you. It looks like DSTR- plus four letters or numbers.",
-"Momentos desastre":"Disaster moments","Así se juega aquí.":"That's how we play here.","vacía":"empty",
+"Momentos desastre":"Disaster moments","· así se juega aquí":"· that's how we play here","Así se juega aquí.":"That's how we play here.","vacía":"empty",
 "Falla el penalti decisivo de la final del Mundial y lo manda por encima del larguero.":"Misses the deciding penalty of the World Cup final, blasting it over the bar.",
 "Dos errores clamorosos en la final de la Champions de Kiev ante el Real Madrid.":"Two howlers in the Champions League final in Kyiv against Real Madrid.",
 "Resbala al tirar el penalti que podía dar la Champions al Chelsea en Moscú.":"Slips while taking the penalty that could have won Chelsea the Champions League in Moscow.",
@@ -660,7 +664,7 @@ function render(){
     ${!configurado?`<div class="aviso err"><strong>Falta configurar la conexión.</strong> Edita <code>config.js</code> y pon la dirección y la clave pública de tu proyecto de Supabase.</div>`:""}
     ${errorCarga?`<div class="aviso err">No se pudieron cargar los datos: ${esc(errorCarga)}. Recarga la página en un rato.</div>`:""}
     <main id="vista"></main>
-    <div class="des-movil">${bannerDes("movil")}</div>
+    ${ruta()==="inicio"?"":`<div class="des-movil">${bannerDes("movil")}</div>`}
     <footer>Puntos Desastre: cuantos más, mejor. Precios en millones.${ultimaCarga?` · Datos cargados ${new Date(ultimaCarga).toLocaleTimeString(LOC(),{hour:"2-digit",minute:"2-digit"})}`:""}</footer></div>`;
   document.getElementById("lang").addEventListener("click",()=>{LANG=LANG==="en"?"es":"en"; guardaLocal("ld_lang",LANG); document.documentElement.lang=LANG; render();});
   const s=document.getElementById("salir"); if(s) s.addEventListener("click",async()=>{await sb.auth.signOut(); location.hash="#clasificacion";});
@@ -1236,7 +1240,8 @@ function vInicio(el){
       <p class="hero-p">Un fantasy de LaLiga al revés: ficha estrellas caras y suma puntos cada vez que fallan, no juegan o ven tarjeta.</p>
       ${pasos}
       <div class="hero-bot"><a class="boton grande" href="#entrar" data-m="registro">Crear cuenta</a><a class="boton grande sec" href="#entrar" data-m="entrar">Ya tengo cuenta</a></div>
-      <p class="small muted"><a href="#reglas">Ver cómo se puntúa</a></p></section>`;
+      <p class="small muted"><a href="#reglas">Ver cómo se puntúa</a></p></section>${gridDes()}`;
+    pintarDesastres();
     el.querySelectorAll("[data-m]").forEach(a=>a.addEventListener("click",()=>{modoEntrar=a.dataset.m}));
     return;
   }
@@ -1266,7 +1271,8 @@ function vInicio(el){
         <p class="small muted">Te lo pasa quien creó la liga. Tiene la forma DSTR- y cuatro letras o números.</p>
         <button type="submit" class="grande">Unirme</button>
       </form>
-    </div></section>`;
+    </div></section>${gridDes()}`;
+  pintarDesastres();
   const fallo=t=>{msgInicio={ok:false,t}; vInicio(el);};
   el.querySelector("#i-unir").addEventListener("submit",async e=>{
     e.preventDefault(); const cod=el.querySelector("#i-cod").value.trim().toUpperCase();
@@ -1290,29 +1296,59 @@ function vInicio(el){
 /* ---------- momentos desastre (laterales) ---------- */
 const ILU = {
   alto:`<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="22" y="34" width="76" height="4" fill="currentColor"/><rect x="22" y="34" width="4" height="40" fill="currentColor"/><rect x="94" y="34" width="4" height="40" fill="currentColor"/><path d="M26 38h68v36H26z" fill="none" stroke="currentColor" stroke-opacity=".25" stroke-dasharray="3 4"/><path d="M60 72 Q 70 30 96 8" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 4"/><circle cx="98" cy="8" r="6" fill="var(--surface)" stroke="currentColor" stroke-width="2"/></svg>`,
-  vacia:`<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="40" y="26" width="56" height="4" fill="currentColor"/><rect x="40" y="26" width="4" height="48" fill="currentColor"/><rect x="92" y="26" width="4" height="48" fill="currentColor"/><path d="M14 66 Q 60 70 108 20" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 4"/><circle cx="110" cy="16" r="6" fill="var(--surface)" stroke="currentColor" stroke-width="2"/><text x="68" y="60" text-anchor="middle" font-size="11" fill="currentColor" opacity=".5">vacía</text></svg>`,
+  vacia:`<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="40" y="26" width="56" height="4" fill="currentColor"/><rect x="40" y="26" width="4" height="48" fill="currentColor"/><rect x="92" y="26" width="4" height="48" fill="currentColor"/><path d="M14 66 Q 60 70 108 20" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 4"/><circle cx="110" cy="16" r="6" fill="var(--surface)" stroke="currentColor" stroke-width="2"/></svg>`,
   manos:`<svg viewBox="0 0 120 80" aria-hidden="true"><path d="M30 52 c0-14 8-20 14-20 s8 6 8 12 v14" fill="none" stroke="currentColor" stroke-width="3"/><path d="M90 52 c0-14-8-20-14-20 s-8 6-8 12 v14" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="68" r="8" fill="var(--surface)" stroke="currentColor" stroke-width="2"/><path d="M60 20 v12 M52 24 l4 8 M68 24 l-4 8" stroke="var(--accent)" stroke-width="2"/></svg>`,
   resbalon:`<svg viewBox="0 0 120 80" aria-hidden="true"><path d="M10 70 h100" stroke="currentColor" stroke-width="2"/><path d="M20 66 q 20 -10 44 -2" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3 4"/><circle cx="62" cy="30" r="7" fill="currentColor"/><path d="M62 37 l-6 18 l-22 8 M60 46 l22 -6 M56 55 l18 10" stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="96" cy="62" r="6" fill="var(--surface)" stroke="currentColor" stroke-width="2"/></svg>`,
-  roja:`<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="48" y="10" width="28" height="40" rx="3" fill="var(--accent)" transform="rotate(10 62 30)"/><path d="M40 74 v-16 q0-8 8-8 h10" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>`
+  roja:`<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="50" y="8" width="28" height="40" rx="3" fill="var(--accent)" transform="rotate(10 64 28)"/><circle cx="40" cy="44" r="6" fill="currentColor"/><path d="M40 50 v20 M40 56 l14 -16" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>`,
+  parada:`<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="16" y="20" width="88" height="4" fill="currentColor"/><rect x="16" y="20" width="4" height="54" fill="currentColor"/><rect x="100" y="20" width="4" height="54" fill="currentColor"/><circle cx="40" cy="44" r="6" fill="currentColor"/><path d="M44 48 l26 10 M50 50 l-6 18 M52 52 l14 14" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><circle cx="78" cy="60" r="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/><path d="M78 72 v6" stroke="var(--accent)" stroke-width="2"/></svg>`,
+  propia:`<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="16" y="22" width="60" height="4" fill="currentColor"/><rect x="16" y="22" width="4" height="52" fill="currentColor"/><rect x="72" y="22" width="4" height="52" fill="currentColor"/><path d="M108 40 Q 80 30 46 56" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 4"/><circle cx="44" cy="58" r="6" fill="var(--surface)" stroke="currentColor" stroke-width="2"/><text x="96" y="70" font-size="12" font-weight="700" fill="var(--accent)">p.p.</text></svg>`
 };
+// [dibujo, quién, texto ES, texto EN, búsqueda en YouTube]
 const DESASTRES = [
-  ["alto","Roberto Baggio, 1994","Falla el penalti decisivo de la final del Mundial y lo manda por encima del larguero."],
-  ["manos","Loris Karius, 2018","Dos errores clamorosos en la final de la Champions de Kiev ante el Real Madrid."],
-  ["resbalon","John Terry, 2008","Resbala al tirar el penalti que podía dar la Champions al Chelsea en Moscú."],
-  ["alto","Sergio Ramos, 2012","Manda a las nubes su penalti en la tanda de semifinales de la Champions ante el Bayern."],
-  ["vacia","Fernando Torres, 2011","Regatea al portero en Old Trafford y, con la portería vacía, la tira fuera."],
-  ["roja","Zinedine Zidane, 2006","Expulsado en la prórroga de la final del Mundial por un cabezazo a Materazzi."],
-  ["resbalon","Steven Gerrard, 2014","Resbala ante el Chelsea, Demba Ba marca y el Liverpool se queda sin Premier."],
-  ["manos","Peter Enckelman, 2002","Deja pasar un saque de banda de su compañero y acaba en gol en el derbi de Birmingham."]
+  ["alto","Roberto Baggio · Mundial 1994","Falla el penalti decisivo de la final y lo manda por encima del larguero.","Misses the deciding penalty of the final, blasting it over the bar.","Baggio penalti final Mundial 1994"],
+  ["manos","Loris Karius · Champions 2018","Dos errores clamorosos en la final de Kiev ante el Real Madrid.","Two howlers in the Kyiv final against Real Madrid.","Karius errores final Champions 2018"],
+  ["resbalon","John Terry · Champions 2008","Resbala al tirar el penalti que podía dar la Champions al Chelsea en Moscú.","Slips taking the penalty that could have won Chelsea the Champions League in Moscow.","Terry resbalón penalti final Moscú 2008"],
+  ["alto","Sergio Ramos · Champions 2012","Manda a las nubes su penalti en la tanda de semifinales ante el Bayern.","Sends his penalty into orbit in the semi-final shoot-out against Bayern.","Sergio Ramos penalti Bayern 2012"],
+  ["vacia","Fernando Torres · 2011","Regatea al portero en Old Trafford y, con la portería vacía, la tira fuera.","Rounds the keeper at Old Trafford and, with an empty net, shoots wide.","Torres fallo Old Trafford 2011 portería vacía"],
+  ["roja","Zinedine Zidane · Mundial 2006","Expulsado en la prórroga de la final por un cabezazo a Materazzi.","Sent off in extra time of the final for headbutting Materazzi.","Zidane cabezazo Materazzi final 2006"],
+  ["resbalon","Steven Gerrard · 2014","Resbala ante el Chelsea, Demba Ba marca y el Liverpool se queda sin Premier.","Slips against Chelsea, Demba Ba scores and Liverpool miss out on the title.","Gerrard resbalón Chelsea 2014"],
+  ["propia","Peter Enckelman · 2002","Deja pasar un saque de banda de su compañero y acaba en gol en el derbi de Birmingham.","Lets a team-mate's throw-in slip past him into the net in the Birmingham derby.","Enckelman saque de banda gol 2002"],
+  ["vacia","Julio Cardeñosa · Mundial 1978","Ante Brasil, con la portería casi vacía, no consigue marcar. El fallo más recordado de España.","Against Brazil, with the goal almost empty, he fails to score. Spain's most famous miss.","Cardeñosa fallo Brasil 1978"],
+  ["parada","Miroslav Djukic · Liga 1994","Penalti en el último minuto ante el Valencia: si marca, el Dépor es campeón. Tiro flojo, lo para el portero y la Liga se va.","Last-minute penalty against Valencia: score and Dépor win the league. Weak shot, saved, title gone.","Djukic penalti Valencia 1994"],
+  ["alto","Martín Palermo · Copa América 1999","Falla tres penaltis en el mismo partido ante Colombia: larguero, a las nubes y parado.","Misses three penalties in one game against Colombia: crossbar, over, saved.","Palermo tres penaltis Colombia 1999"],
+  ["alto","Iván Rocha · Liga 1998","Penalti con 0-0 ante el Valencia y el balón sale a unos diez metros del palo.","Penalty at 0-0 against Valencia and the ball ends up about ten metres wide.","Iván Rocha penalti Alavés Valencia"],
+  ["vacia","Gonzalo Higuaín · Mundial 2014","Solo ante Neuer en la final, la manda fuera. Alemania acaba campeona.","Clean through on Neuer in the final, he puts it wide. Germany win the cup.","Higuaín fallo final Mundial 2014"],
+  ["vacia","Ronny Rosenthal · 1992","Regatea al portero del Aston Villa, portería vacía… y la estrella contra el larguero.","Rounds the Aston Villa keeper, empty net… and smashes it off the bar.","Rosenthal fallo larguero Aston Villa 1992"],
+  ["manos","René Higuita · Mundial 1990","Sale a regatear lejos de su área, Roger Milla le roba el balón y marca.","Comes way out to dribble, Roger Milla steals the ball and scores.","Higuita Roger Milla 1990"],
+  ["manos","Paul Robinson · 2006","Un pase atrás bota en un montículo, falla el despeje y el balón entra.","A back-pass hits a bump, he air-kicks the clearance and it rolls in.","Paul Robinson fallo Croacia 2006"],
+  ["manos","David Seaman · Mundial 2002","Ronaldinho le hace un gol de falta desde lejos por encima de la cabeza.","Ronaldinho lobs him from a long-range free kick.","Ronaldinho falta Seaman 2002"],
+  ["propia","Andoni Zubizarreta · Mundial 1998","Un centro de Nigeria que se iba fuera acaba en su propia portería.","A Nigerian cross that was going wide ends up in his own net.","Zubizarreta autogol Nigeria 1998"],
+  ["parada","Joaquín · Mundial 2002","Le paran el penalti en la tanda de cuartos ante Corea y España se va a casa.","His shoot-out penalty against South Korea is saved and Spain go home.","Joaquín penalti Corea 2002"],
+  ["alto","Leo Messi · Copa América 2016","Manda por encima del larguero su penalti en la tanda de la final ante Chile.","Blasts his penalty over the bar in the final shoot-out against Chile.","Messi penalti final Copa América 2016"],
+  ["parada","Kylian Mbappé · Eurocopa 2021","Sommer le para el último penalti de la tanda y Suiza elimina a Francia.","Sommer saves his last shoot-out penalty and Switzerland knock out France.","Mbappé penalti Suiza Eurocopa"],
+  ["parada","Gareth Southgate · Eurocopa 1996","Le paran el penalti en la tanda de semifinales ante Alemania, en Wembley.","His semi-final shoot-out penalty against Germany at Wembley is saved.","Southgate penalti Alemania 1996"],
+  ["resbalon","Sebastián Abreu · Libertadores 1996","Con San Lorenzo en el Monumental, regatea al portero de River, el narrador ya canta el gol… y se enreda solo y la manda fuera.","Playing for San Lorenzo at River's stadium, he rounds the keeper, the commentator is already calling the goal… and he trips over himself and puts it wide.","https://www.youtube.com/watch?v=J3kTA4fXQuc"],
+  ["vacia","Lamine Yamal · Clásico 2026","Al borde del descanso, desde muy cerca, la manda fuera. El Madrid acaba ganando 2-1.","Just before half-time, from close range, he puts it wide. Madrid go on to win 2-1.","Lamine Yamal fallo Clásico octubre 2026"]
 ];
-let iDes = Math.floor(Math.random()*DESASTRES.length);
-const tarjetaDes = k => { const [t,q,txt]=DESASTRES[k%DESASTRES.length];
-  return `<div class="des-ilu">${ILU[t]}</div><p class="des-q">${q}</p><p class="des-t">${txt}</p>`; };
+const desSlot = {};   // hueco -> índice mostrado
+const nuevoDes = hueco => { const usados=new Set(Object.entries(desSlot).filter(([k])=>k!==hueco).map(([,v])=>v));
+  const libres=DESASTRES.map((_,i)=>i).filter(i=>!usados.has(i)&&i!==desSlot[hueco]); return libres[Math.floor(Math.random()*libres.length)]; };
+const tarjetaDes = k => { const [t,q,es,en,yt]=DESASTRES[k]; const ingles=LANG==="en";
+  return `<div class="des-ilu">${ILU[t]}</div><p class="des-q">${esc(q)}</p><p class="des-t">${esc(ingles?en:es)}</p>
+    <a class="des-yt" href="${/^https:/.test(yt)?yt:"https://www.youtube.com/results?search_query="+encodeURIComponent(yt)}" target="_blank" rel="noopener">▶ ${ingles?"Watch it":"Ver la jugada"}</a>`; };
 function pintarDesastres(){
-  document.querySelectorAll("[data-des]").forEach(n=>{ n.innerHTML=tarjetaDes(iDes + +n.dataset.des); traducir(n); });
+  document.querySelectorAll("[data-des]").forEach(n=>{ const h=n.dataset.des; if(desSlot[h]===undefined) desSlot[h]=nuevoDes(h); n.innerHTML=tarjetaDes(desSlot[h]); });
 }
-setInterval(()=>{ if(document.visibilityState==="visible"){ iDes++; pintarDesastres(); } }, 9000);
-const bannerDes = lado => `<aside class="desastres des-${lado}" aria-label="Momentos desastre"><p class="des-cab">Momentos desastre</p><div class="des-card" data-des="${lado==="izq"?0:lado==="der"?4:0}"></div><p class="des-pie">Así se juega aquí.</p></aside>`;
+let desTurno = 0;
+setInterval(()=>{
+  if(document.visibilityState!=="visible") return;
+  const vis=[...document.querySelectorAll("[data-des]")].filter(n=>n.offsetParent!==null); if(!vis.length) return;
+  const n=vis[desTurno++ % vis.length], h=n.dataset.des; desSlot[h]=nuevoDes(h); n.innerHTML=tarjetaDes(desSlot[h]);
+}, 4000);
+const bannerDes = lado => `<aside class="desastres des-${lado}" aria-label="Momentos desastre"><p class="des-cab">Momentos desastre</p>
+  ${(lado==="movil"?[0]:[0,1]).map(i=>`<div class="des-card" data-des="${lado}${i}"></div>`).join("")}</aside>`;
+const gridDes = () => `<section class="des-grid-wrap" aria-label="Momentos desastre"><h3 class="des-cab">Momentos desastre <span class="muted small">· así se juega aquí</span></h3>
+  <div class="des-grid">${[0,1,2].map(i=>`<div class="des-card" data-des="ini${i}"></div>`).join("")}</div></section>`;
 
 /* ---------- entrar / registrarse / contraseña ---------- */
 let modoEntrar = "entrar", recuperando = false;
