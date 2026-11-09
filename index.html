@@ -39,6 +39,44 @@ header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:spac
 .cards i:last-child{background:var(--accent);left:10px;transform:rotate(9deg)}
 h1{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,7vw,56px);line-height:.95;letter-spacing:.01em;margin:0;text-transform:uppercase}
 .lema{color:var(--muted);margin:4px 0 0;font-size:14px}
+a.marca{text-decoration:none;color:inherit;border-radius:var(--r)}
+a.marca:hover h1{color:var(--accent)}
+.hero{max-width:860px;margin:8px auto 0;text-align:center}
+.hero-t{font-size:clamp(34px,6vw,58px);line-height:1;margin:0 0 12px}
+.hero-p{color:var(--muted);font-size:17px;max-width:60ch;margin:0 auto 20px}
+.pasos{list-style:none;padding:0;margin:0 auto 24px;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 22px;font-size:14px;color:var(--muted)}
+.pasos li{display:flex;align-items:center;gap:8px}
+.pasos span{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);font-weight:700;font-size:12px}
+.pasos li.ahora{color:var(--ink);font-weight:700}.pasos li.ahora span{background:var(--accent);border-color:var(--accent);color:#fff}
+.pasos li.hecho span{background:var(--good);border-color:var(--good);color:#fff}
+.hero-bot{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-bottom:12px}
+.boton{display:inline-block;text-decoration:none;font-weight:700;border-radius:var(--r);border:1px solid var(--ink);background:var(--ink);color:var(--bg);padding:8px 14px}
+.boton.sec{background:transparent;color:var(--ink)}
+.grande{font-size:18px;padding:14px 26px}
+.grandes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px;text-align:left;margin-top:8px}
+.grande-card{padding:22px;border-width:2px;display:flex;flex-direction:column;gap:6px}
+.grande-card h3{font-family:var(--f-display);font-weight:400;font-size:26px;letter-spacing:.01em;margin-bottom:6px}
+.grande-card button.grande{margin-top:auto;width:100%}
+.grande-card .campo input{font-size:17px;padding:10px 12px}
+.cod-input{text-transform:uppercase;font-family:var(--f-mono);letter-spacing:.08em}
+details.mas{margin:4px 0 12px}details.mas summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--muted)}
+details.mas[open] summary{margin-bottom:10px}
+.desastres{display:none}
+.des-movil .desastres{display:block;margin:32px auto 0;max-width:420px}
+@media (min-width:1420px){
+  .desastres{display:block;position:fixed;top:140px;width:min(220px,calc((100vw - 1100px)/2 - 40px))}
+  .des-izq{left:20px}.des-der{right:20px}.des-movil{display:none}}
+.des-cab{font-family:var(--f-display);text-transform:uppercase;font-size:18px;margin:0 0 8px;border-bottom:3px solid var(--ink);padding-bottom:4px}
+.des-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;min-height:250px}
+.des-movil .des-card{min-height:0}
+.des-ilu{color:var(--ink);background:var(--sunk);border-radius:calc(var(--r) - 2px);padding:8px;margin-bottom:10px}
+.des-ilu svg{display:block;width:100%;height:auto}
+.des-q{font-weight:700;margin:0 0 4px;font-size:14px}
+.des-t{margin:0;font-size:13px;color:var(--muted)}
+.des-pie{font-size:12px;color:var(--muted);margin:6px 0 0;font-style:italic}
+@media (prefers-reduced-motion:no-preference){.des-card>*{animation:desin .5s ease}}
+@keyframes desin{from{opacity:0}to{opacity:1}}
+
 nav.tabs{display:flex;flex-wrap:wrap;gap:4px}
 nav.tabs a{font-weight:600;font-size:14px;text-decoration:none;color:var(--muted);padding:6px 12px;border-radius:999px}
 nav.tabs a:hover{color:var(--ink);background:var(--sunk)}
@@ -239,7 +277,7 @@ let cargado = false, errorCarga = "", ultimaCarga = 0;
 const app = document.getElementById("app");
 const POSS = ["POR","DEF","MED","DEL"];
 const LIM = {POR:[1,1],DEF:[4,4],MED:[3,4],DEL:[2,3]};
-const RUTAS = {clasificacion:"Clasificación", equipos:"Equipos", fichar:"Mi equipo", jornadas:"Jornadas", reglas:"Reglas", ligas:"Ligas", admin:"Admin", entrar:"Entrar"};
+const RUTAS = {inicio:"Inicio", clasificacion:"Clasificación", equipos:"Equipos", fichar:"Mi equipo", jornadas:"Jornadas", reglas:"Reglas", ligas:"Ligas", admin:"Admin", entrar:"Entrar"};
 
 const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let LANG = "es"; try { LANG = localStorage.getItem("ld_lang")==="en" ? "en" : "es"; } catch(e){}
@@ -439,6 +477,22 @@ Object.assign(EN, {
 "Estado de los datos":"Data status","Corregir posición":"Fix position","Subir jugadores.json o jornada_N.json":"Upload jugadores.json or jornada_N.json",
 "Los puntos los sube el script de tu ordenador. Si no puede, sube aquí los archivos a mano:":"Points are uploaded by the script on your computer. If it can't, upload the files here by hand:",
 "Para jugadores mal clasificados por SofaScore. Vale para equipos nuevos y cambios en todas las ligas; los ya fichados mantienen la posición con la que se ficharon.":"For players SofaScore classifies wrongly. It applies to new teams and changes in every league; players already signed keep the position they were signed in.",
+"Inicio":"Home","Crea tu cuenta":"Create your account","Crea una liga o únete a una":"Create or join a league","Ficha a los peores":"Sign the worst",
+"Gasta a lo grande.":"Spend big.","Gana con los que peor juegan.":"Win with the ones who play worst.",
+"Un fantasy de LaLiga al revés: ficha estrellas caras y suma puntos cada vez que fallan, no juegan o ven tarjeta.":"A LaLiga fantasy game in reverse: sign expensive stars and score every time they flop, don't play or get booked.",
+"Ya tengo cuenta":"I have an account","Ver cómo se puntúa":"See how scoring works","¿Empezamos?":"Shall we start?",
+"Para jugar necesitas una liga. Crea la tuya y pasa el código a tus amigos, o únete con el código que te hayan dado.":"To play you need a league. Create yours and share the code with your friends, or join with the code you were given.",
+"Más opciones":"More options","Podrás cambiar estas reglas después, menos el modo exclusivo.":"You can change these rules later, except exclusive mode.",
+"Unirme a una liga":"Join a league","Te lo pasa quien creó la liga. Tiene la forma DSTR- y cuatro letras o números.":"The league creator gives it to you. It looks like DSTR- plus four letters or numbers.",
+"Momentos desastre":"Disaster moments","Así se juega aquí.":"That's how we play here.","vacía":"empty",
+"Falla el penalti decisivo de la final del Mundial y lo manda por encima del larguero.":"Misses the deciding penalty of the World Cup final, blasting it over the bar.",
+"Dos errores clamorosos en la final de la Champions de Kiev ante el Real Madrid.":"Two howlers in the Champions League final in Kyiv against Real Madrid.",
+"Resbala al tirar el penalti que podía dar la Champions al Chelsea en Moscú.":"Slips while taking the penalty that could have won Chelsea the Champions League in Moscow.",
+"Manda a las nubes su penalti en la tanda de semifinales de la Champions ante el Bayern.":"Sends his penalty into orbit in the Champions League semi-final shoot-out against Bayern.",
+"Regatea al portero en Old Trafford y, con la portería vacía, la tira fuera.":"Rounds the keeper at Old Trafford and, with an empty net, shoots wide.",
+"Expulsado en la prórroga de la final del Mundial por un cabezazo a Materazzi.":"Sent off in extra time of the World Cup final for headbutting Materazzi.",
+"Resbala ante el Chelsea, Demba Ba marca y el Liverpool se queda sin Premier.":"Slips against Chelsea, Demba Ba scores and Liverpool miss out on the title.",
+"Deja pasar un saque de banda de su compañero y acaba en gol en el derbi de Birmingham.":"Lets a team-mate's throw-in slip past him and into the net in the Birmingham derby.",
 "¿Has olvidado la contraseña?":"Forgot your password?","Volver a entrar":"Back to log in","Enviar enlace":"Send link","Enviando…":"Sending…","Guardando…":"Saving…",
 "Escribe tu correo y te mandamos un enlace para poner una contraseña nueva.":"Enter your email and we'll send you a link to set a new password.",
 "Si ese correo tiene cuenta, te hemos mandado un enlace. Mira también en spam.":"If that email has an account, we've sent you a link. Check spam too.",
@@ -581,32 +635,40 @@ function clasificacion(){
 function cambios(a,b){const s=new Set(a); return b.filter(x=>!s.has(x)).length}
 
 /* ---------- marco ---------- */
-function ruta(){const h=location.hash.slice(1); return RUTAS[h]?h:"clasificacion"}
+const CON_LIGA = ["clasificacion","equipos","fichar","jornadas","ligas"];
+const enLiga = () => !!(user && liga());
+function ruta(){ let h=location.hash.slice(1);
+  if(!RUTAS[h]) h = enLiga() ? "clasificacion" : "inicio";
+  if(h==="inicio" && enLiga()) h="clasificacion";
+  if(CON_LIGA.includes(h) && !enLiga() && cargado) h="inicio";
+  return h; }
 function render(){
   let r=ruta();
   if(r==="admin" && !esAdmin) r="clasificacion";
-  const navs=Object.entries(RUTAS).filter(([k])=>k!=="entrar" && (k!=="admin"||esAdmin))
+  const navs=Object.entries(RUTAS).filter(([k])=>k!=="entrar" && (k!=="admin"||esAdmin) && (enLiga() ? k!=="inicio" : !CON_LIGA.includes(k)))
     .map(([k,v])=>`<a href="#${k}"${k===r?' aria-current="page"':""}>${v}</a>`).join("");
   const sesion = user
     ? `<span class="sesion"><span class="muted small">${esc(user.email)}</span> <button class="mini sec" id="salir">Salir</button></span>`
     : `<a class="btn-entrar" href="#entrar"${r==="entrar"?' aria-current="page"':""}>Entrar</a>`;
   const selLiga = misLigas.length
     ? `<div class="sel-liga"><label for="ligasel">Liga</label><select id="ligasel">${misLigas.map(l=>`<option value="${esc(l.id)}"${l.id===ligaId?" selected":""}>${esc(l.nombre)}</option>`).join("")}</select></div>` : "";
-  app.innerHTML=`<div class="wrap">
-    <header class="top"><div class="marca"><div class="cards" aria-hidden="true"><i></i><i></i></div>
-      <div><h1>Liga Desastre</h1><p class="lema">Gasta a lo grande y gana con el equipo que peor juegue.</p></div></div>
+  app.innerHTML=`${bannerDes("izq")}${bannerDes("der")}<div class="wrap">
+    <header class="top"><a class="marca" href="#inicio" aria-label="Liga Desastre, ir al inicio"><div class="cards" aria-hidden="true"><i></i><i></i></div>
+      <div><h1>Liga Desastre</h1><p class="lema">Gasta a lo grande y gana con el equipo que peor juegue.</p></div></a>
       <div class="derecha"><nav class="tabs" aria-label="Secciones">${navs}</nav>
         <div class="derecha-2">${selLiga}${sesion}<button class="lang" id="lang" aria-label="${LANG==="en"?"Cambiar a español":"Switch to English"}">${LANG==="en"?"ES":"EN"}</button></div></div></header>
     ${!configurado?`<div class="aviso err"><strong>Falta configurar la conexión.</strong> Edita <code>config.js</code> y pon la dirección y la clave pública de tu proyecto de Supabase.</div>`:""}
     ${errorCarga?`<div class="aviso err">No se pudieron cargar los datos: ${esc(errorCarga)}. Recarga la página en un rato.</div>`:""}
     <main id="vista"></main>
+    <div class="des-movil">${bannerDes("movil")}</div>
     <footer>Puntos Desastre: cuantos más, mejor. Precios en millones.${ultimaCarga?` · Datos cargados ${new Date(ultimaCarga).toLocaleTimeString(LOC(),{hour:"2-digit",minute:"2-digit"})}`:""}</footer></div>`;
   document.getElementById("lang").addEventListener("click",()=>{LANG=LANG==="en"?"es":"en"; guardaLocal("ld_lang",LANG); document.documentElement.lang=LANG; render();});
   const s=document.getElementById("salir"); if(s) s.addEventListener("click",async()=>{await sb.auth.signOut(); location.hash="#clasificacion";});
   const ls=document.getElementById("ligasel"); if(ls) ls.addEventListener("change",e=>cambiarLiga(e.target.value));
   const v=document.getElementById("vista");
+  pintarDesastres();
   if(configurado && !cargado && !errorCarga){ v.innerHTML=`<div class="vacio">Cargando…</div>`; return; }
-  ({clasificacion:vClasif, equipos:vEquipos, fichar:vFichar, jornadas:vJornadas, reglas:vReglas, ligas:vLigas, admin:vAdmin, entrar:vEntrar})[r](v);
+  ({inicio:vInicio, clasificacion:vClasif, equipos:vEquipos, fichar:vFichar, jornadas:vJornadas, reglas:vReglas, ligas:vLigas, admin:vAdmin, entrar:vEntrar})[r](v);
 }
 addEventListener("hashchange",()=>{render(); scrollTo(0,0)});
 
@@ -1161,6 +1223,97 @@ function vAdmin(el){
   });
 }
 
+/* ---------- inicio (sin liga) ---------- */
+let msgInicio = null;
+function vInicio(el){
+  const pasos = `<ol class="pasos">
+      <li class="${user?"hecho":"ahora"}"><span>1</span>Crea tu cuenta</li>
+      <li class="${user?"ahora":""}"><span>2</span>Crea una liga o únete a una</li>
+      <li><span>3</span>Ficha a los peores</li></ol>`;
+  if(!user){
+    el.innerHTML=`<section class="hero">
+      <h2 class="hero-t">Gasta a lo grande.<br>Gana con los que peor juegan.</h2>
+      <p class="hero-p">Un fantasy de LaLiga al revés: ficha estrellas caras y suma puntos cada vez que fallan, no juegan o ven tarjeta.</p>
+      ${pasos}
+      <div class="hero-bot"><a class="boton grande" href="#entrar" data-m="registro">Crear cuenta</a><a class="boton grande sec" href="#entrar" data-m="entrar">Ya tengo cuenta</a></div>
+      <p class="small muted"><a href="#reglas">Ver cómo se puntúa</a></p></section>`;
+    el.querySelectorAll("[data-m]").forEach(a=>a.addEventListener("click",()=>{modoEntrar=a.dataset.m}));
+    return;
+  }
+  el.innerHTML=`<section class="hero">
+    <h2 class="hero-t">¿Empezamos?</h2>
+    <p class="hero-p">Para jugar necesitas una liga. Crea la tuya y pasa el código a tus amigos, o únete con el código que te hayan dado.</p>
+    ${pasos}
+    ${msgInicio?`<div class="aviso${msgInicio.ok?"":" err"}">${esc(msgInicio.t)}</div>`:""}
+    <div class="grandes">
+      <form class="panel grande-card" id="i-crear" novalidate>
+        <h3>Crear una liga</h3>
+        <div class="campo"><label for="i-nom">Nombre de la liga</label><input id="i-nom" maxlength="40" placeholder="Los del pueblo"></div>
+        <details class="mas"><summary>Más opciones</summary>
+          <div class="cols-nombres">
+            <div class="campo"><label for="i-min">Gasto mínimo (M)</label><input id="i-min" type="number" min="0" step="5" value="375"></div>
+            <div class="campo"><label for="i-div">Divisor del multiplicador</label><input id="i-div" type="number" min="1" step="5" value="25"></div>
+            <div class="campo"><label for="i-camb">Cambios por jornada</label><input id="i-camb" type="number" min="0" max="11" value="2"></div>
+          </div>
+          <label class="check"><input type="checkbox" id="i-excl"> <span><strong>Jugadores exclusivos.</strong> Cada jugador solo puede estar en un equipo de la liga: se lo queda el primero que lo guarda. Cada jornada los equipos empiezan vacíos y hay que montarlos de nuevo (no hay límite de cambios). Si alguien no guarda alineación, suma −88.</span></label>
+          <p class="small muted">Podrás cambiar estas reglas después, menos el modo exclusivo.</p>
+        </details>
+        <button type="submit" class="grande">Crear liga</button>
+      </form>
+      <form class="panel grande-card" id="i-unir" novalidate>
+        <h3>Unirme a una liga</h3>
+        <div class="campo"><label for="i-cod">Código de la liga</label><input id="i-cod" class="cod-input" placeholder="DSTR-XXXX" autocomplete="off"></div>
+        <p class="small muted">Te lo pasa quien creó la liga. Tiene la forma DSTR- y cuatro letras o números.</p>
+        <button type="submit" class="grande">Unirme</button>
+      </form>
+    </div></section>`;
+  const fallo=t=>{msgInicio={ok:false,t}; vInicio(el);};
+  el.querySelector("#i-unir").addEventListener("submit",async e=>{
+    e.preventDefault(); const cod=el.querySelector("#i-cod").value.trim().toUpperCase();
+    if(!/^DSTR-[A-Z0-9]{4}$/.test(cod)) return fallo("El código tiene la forma DSTR-XXXX (cuatro letras o números).");
+    const {data,error}=await sb.rpc("unirse_liga",{p_codigo:cod});
+    if(error) return fallo(error.message);
+    msgInicio=null; ligaId=data.id; guardaLocal("ld_liga",data.id);
+    await recargar(); location.hash="#fichar";
+  });
+  el.querySelector("#i-crear").addEventListener("submit",async e=>{
+    e.preventDefault(); const nombre=el.querySelector("#i-nom").value.trim();
+    if(nombre.length<3) return fallo("Ponle a la liga un nombre de al menos 3 caracteres.");
+    const {data,error}=await sb.rpc("crear_liga",{p_nombre:nombre, p_minimo:+el.querySelector("#i-min").value||0, p_max_cambios:+el.querySelector("#i-camb").value||0,
+      p_divisor:+el.querySelector("#i-div").value||25, p_exclusivo:el.querySelector("#i-excl").checked});
+    if(error) return fallo(error.message);
+    msgInicio=null; nuevaLiga=data; msgLigas=null; ligaId=data.id; guardaLocal("ld_liga",data.id);
+    await recargar(); location.hash="#ligas";
+  });
+}
+
+/* ---------- momentos desastre (laterales) ---------- */
+const ILU = {
+  alto:`<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="22" y="34" width="76" height="4" fill="currentColor"/><rect x="22" y="34" width="4" height="40" fill="currentColor"/><rect x="94" y="34" width="4" height="40" fill="currentColor"/><path d="M26 38h68v36H26z" fill="none" stroke="currentColor" stroke-opacity=".25" stroke-dasharray="3 4"/><path d="M60 72 Q 70 30 96 8" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 4"/><circle cx="98" cy="8" r="6" fill="var(--surface)" stroke="currentColor" stroke-width="2"/></svg>`,
+  vacia:`<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="40" y="26" width="56" height="4" fill="currentColor"/><rect x="40" y="26" width="4" height="48" fill="currentColor"/><rect x="92" y="26" width="4" height="48" fill="currentColor"/><path d="M14 66 Q 60 70 108 20" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 4"/><circle cx="110" cy="16" r="6" fill="var(--surface)" stroke="currentColor" stroke-width="2"/><text x="68" y="60" text-anchor="middle" font-size="11" fill="currentColor" opacity=".5">vacía</text></svg>`,
+  manos:`<svg viewBox="0 0 120 80" aria-hidden="true"><path d="M30 52 c0-14 8-20 14-20 s8 6 8 12 v14" fill="none" stroke="currentColor" stroke-width="3"/><path d="M90 52 c0-14-8-20-14-20 s-8 6-8 12 v14" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="60" cy="68" r="8" fill="var(--surface)" stroke="currentColor" stroke-width="2"/><path d="M60 20 v12 M52 24 l4 8 M68 24 l-4 8" stroke="var(--accent)" stroke-width="2"/></svg>`,
+  resbalon:`<svg viewBox="0 0 120 80" aria-hidden="true"><path d="M10 70 h100" stroke="currentColor" stroke-width="2"/><path d="M20 66 q 20 -10 44 -2" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3 4"/><circle cx="62" cy="30" r="7" fill="currentColor"/><path d="M62 37 l-6 18 l-22 8 M60 46 l22 -6 M56 55 l18 10" stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="96" cy="62" r="6" fill="var(--surface)" stroke="currentColor" stroke-width="2"/></svg>`,
+  roja:`<svg viewBox="0 0 120 80" aria-hidden="true"><rect x="48" y="10" width="28" height="40" rx="3" fill="var(--accent)" transform="rotate(10 62 30)"/><path d="M40 74 v-16 q0-8 8-8 h10" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>`
+};
+const DESASTRES = [
+  ["alto","Roberto Baggio, 1994","Falla el penalti decisivo de la final del Mundial y lo manda por encima del larguero."],
+  ["manos","Loris Karius, 2018","Dos errores clamorosos en la final de la Champions de Kiev ante el Real Madrid."],
+  ["resbalon","John Terry, 2008","Resbala al tirar el penalti que podía dar la Champions al Chelsea en Moscú."],
+  ["alto","Sergio Ramos, 2012","Manda a las nubes su penalti en la tanda de semifinales de la Champions ante el Bayern."],
+  ["vacia","Fernando Torres, 2011","Regatea al portero en Old Trafford y, con la portería vacía, la tira fuera."],
+  ["roja","Zinedine Zidane, 2006","Expulsado en la prórroga de la final del Mundial por un cabezazo a Materazzi."],
+  ["resbalon","Steven Gerrard, 2014","Resbala ante el Chelsea, Demba Ba marca y el Liverpool se queda sin Premier."],
+  ["manos","Peter Enckelman, 2002","Deja pasar un saque de banda de su compañero y acaba en gol en el derbi de Birmingham."]
+];
+let iDes = Math.floor(Math.random()*DESASTRES.length);
+const tarjetaDes = k => { const [t,q,txt]=DESASTRES[k%DESASTRES.length];
+  return `<div class="des-ilu">${ILU[t]}</div><p class="des-q">${q}</p><p class="des-t">${txt}</p>`; };
+function pintarDesastres(){
+  document.querySelectorAll("[data-des]").forEach(n=>{ n.innerHTML=tarjetaDes(iDes + +n.dataset.des); traducir(n); });
+}
+setInterval(()=>{ if(document.visibilityState==="visible"){ iDes++; pintarDesastres(); } }, 9000);
+const bannerDes = lado => `<aside class="desastres des-${lado}" aria-label="Momentos desastre"><p class="des-cab">Momentos desastre</p><div class="des-card" data-des="${lado==="izq"?0:lado==="der"?4:0}"></div><p class="des-pie">Así se juega aquí.</p></aside>`;
+
 /* ---------- entrar / registrarse / contraseña ---------- */
 let modoEntrar = "entrar", recuperando = false;
 const urlWeb = () => location.origin + location.pathname;
@@ -1240,7 +1393,7 @@ function vEntrar(el){
     if(modoEntrar==="registro" && !r.data.session){
       msg.className="small ok-txt";
       msg.textContent=`Casi está. Te hemos mandado un correo a ${email}. Pulsa el enlace que trae y ya podrás entrar. Si no lo ves, mira en spam.`; return; }
-    location.hash = "#clasificacion";
+    location.hash = "#inicio";
   });
 }
 
