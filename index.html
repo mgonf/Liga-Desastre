@@ -492,7 +492,7 @@ Object.assign(EN, {
 "Para jugadores mal clasificados por SofaScore. Vale para equipos nuevos y cambios en todas las ligas; los ya fichados mantienen la posición con la que se ficharon.":"For players SofaScore classifies wrongly. It applies to new teams and changes in every league; players already signed keep the position they were signed in.",
 "Inicio":"Home","Crea tu cuenta":"Create your account","Crea una liga o únete a una":"Create or join a league","Ficha a los peores":"Sign the worst",
 "Gasta a lo grande.":"Spend big.","Gana con los que peor juegan.":"Win with the ones who play worst.",
-"Un fantasy de LaLiga al revés: ficha estrellas caras y suma puntos cada vez que fallan, no juegan o ven tarjeta.":"A LaLiga fantasy game in reverse: sign expensive stars and score every time they flop, don't play or get booked.",
+"Un fantasy de LaLiga al revés: ficha estrellas caras y suma puntos cuando juegan mal: fallan ocasiones, ven tarjetas o pierden siendo favoritos. Ojo: si no juegan, restan.":"A LaLiga fantasy game in reverse: sign expensive stars and score when they play badly: missed chances, cards or losing as favourites. Careful: if they don't play, they lose you points.",
 "Ya tengo cuenta":"I have an account","Ver cómo se puntúa":"See how scoring works","¿Empezamos?":"Shall we start?",
 "Para jugar necesitas una liga. Crea la tuya y pasa el código a tus amigos, o únete con el código que te hayan dado.":"To play you need a league. Create yours and share the code with your friends, or join with the code you were given.",
 "Más opciones":"More options","Podrás cambiar estas reglas después, menos el modo exclusivo.":"You can change these rules later, except exclusive mode.",
@@ -1267,7 +1267,7 @@ function vInicio(el){
   if(!user){
     el.innerHTML=`<section class="hero">
       <h2 class="hero-t">Gasta a lo grande.<br>Gana con los que peor juegan.</h2>
-      <p class="hero-p">Un fantasy de LaLiga al revés: ficha estrellas caras y suma puntos cada vez que fallan, no juegan o ven tarjeta.</p>
+      <p class="hero-p">Un fantasy de LaLiga al revés: ficha estrellas caras y suma puntos cuando juegan mal: fallan ocasiones, ven tarjetas o pierden siendo favoritos. Ojo: si no juegan, restan.</p>
       ${pasos}
       <div class="hero-bot"><a class="boton grande" href="#entrar" data-m="registro">Crear cuenta</a><a class="boton grande sec" href="#entrar" data-m="entrar">Ya tengo cuenta</a></div>
       <p class="small muted"><a href="#reglas">Ver cómo se puntúa</a></p></section>${gridDes()}`;
