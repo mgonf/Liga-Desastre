@@ -159,6 +159,11 @@ a.eq-link:hover{border-bottom-style:solid}
 .jug .camiseta{margin:0}
 button.jl{background:none;border:0;padding:0;margin:0;font:inherit;font-weight:inherit;color:inherit;cursor:pointer;text-align:inherit;border-radius:2px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:baseline;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:2px}
 button.jl:hover{text-decoration-color:currentColor}
+.baja{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:3px;font-size:12px;font-weight:800;line-height:1;margin-left:4px;vertical-align:-2px;flex:none;font-family:var(--f-body)}
+.baja-lesion{background:var(--accent);color:var(--accent-ink)}
+.baja-duda{background:var(--yellow);color:#1b1500}
+.baja-sancion{background:var(--accent);width:10px;height:14px;border-radius:2px;transform:rotate(8deg)}
+.leyenda{margin:-4px 0 10px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
 .modal-fondo{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding-top:calc(env(safe-area-inset-top,0px) + 24px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 24px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));box-sizing:border-box}
 .modal{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;max-width:820px;width:100%;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.35);position:relative;box-sizing:border-box;min-width:0}
 .modal .cerrar{position:absolute;top:12px;right:12px;font-size:18px;line-height:1;padding:4px 10px}
@@ -264,7 +269,7 @@ async function cargar(){
   ]);
   const err = [jg,jo].find(r=>r.error);
   if(err) throw new Error(err.error.message);
-  S.jugadores = (jg.data||[]).map(j=>({id:+j.id, nombre:j.nombre, equipo:j.equipo, equipo_id:j.equipo_id, pos:j.pos_manual||j.pos, pos_orig:j.pos, pos_manual:j.pos_manual, precio:+j.precio}));
+  S.jugadores = (jg.data||[]).map(j=>({id:+j.id, nombre:j.nombre, equipo:j.equipo, equipo_id:j.equipo_id, pos:j.pos_manual||j.pos, pos_orig:j.pos, pos_manual:j.pos_manual, precio:+j.precio, baja:j.baja||null, baja_info:j.baja_info||"", baja_act:j.baja_actualizada||null}));
   J = new Map(S.jugadores.map(j=>[j.id,j]));
   S.cal = {}; S.jornadas = {};
   (jo.data||[]).forEach(r=>{
@@ -448,6 +453,9 @@ EN_RE.push(
  [/^Te has unido a (.+)\. Ahora monta tu equipo en Mi equipo\.$/, "You've joined $1. Now build your team in My team."],
  [/^Modo de la liga: (jugadores exclusivos|normal) \(se elige al crearla y no se puede cambiar\)\.$/, (m,x)=>`League mode: ${x==="normal"?"normal":"exclusive players"} (chosen when it's created; it can't be changed).`],
  [/^Miembros sin equipo: (.+)$/, "Members without a team: $1"],
+ [/^Ojo: (.+)\. Si no juega, resta −8\.$/, (m,x)=>`Careful: ${x.replace(/\(lesionado\)/g,"(injured)").replace(/\(duda\)/g,"(doubtful)").replace(/\(sancionado\)/g,"(suspended)")}. If he doesn't play, he scores −8.`],
+ [/^lesionado ·$/, "injured ·"], [/^duda ·$/, "doubtful ·"], [/^sancionado$/, "suspended"], [/^\(según SofaScore para su próximo partido\)$/, "(according to SofaScore for their next match)"],
+ [/^Lesionado$/, "Injured"], [/^Duda$/, "Doubtful"], [/^Sancionado$/, "Suspended"], [/^(Lesionado|Duda|Sancionado): (.+)$/, (m,a,b)=>({Lesionado:"Injured",Duda:"Doubtful",Sancionado:"Suspended"})[a]+": "+b],
  [/^La alineación de (.+) se verá cuando empiece la jornada para la que la ha guardado\.$/, "$1's line-up will be shown when the matchday it was saved for kicks off."], [/^Cambios: (\d+) de (\d+)$/, "Changes: $1 of $2"], [/^Guardado para la jornada (\d+)\.$/, "Saved for matchday $1."],
  [/^(.+) no presentó alineación en la jornada (\d+): suma −88\.$/, "$1 didn't submit a line-up for matchday $2: −88."],
  [/^Llevas (\d+) cambios respecto a tu equipo actual y el máximo es (\d+)\.$/, "You have $1 changes from your current team and the max is $2."],
@@ -479,7 +487,9 @@ new MutationObserver(ms=>{ if(LANG!=="en") return; ms.forEach(m=>{ if(m.type==="
 document.documentElement.lang=LANG;
 
 /* ---------- ficha de jugador ---------- */
-const jn = j => j ? `<button type="button" class="jl" data-pj="${j.id}" aria-label="Ver ficha de ${esc(j.nombre)}">${esc(j.nombre)}</button>` : "";
+const BAJAS = {lesion:["Lesionado","+"], duda:["Duda","?"], sancion:["Sancionado",""]};
+const marcaBaja = j => { const b=j&&BAJAS[j.baja]; return b ? `<span class="baja baja-${j.baja}" title="${esc(b[0]+(j.baja_info?": "+j.baja_info:""))}" aria-label="${esc(b[0])}">${b[1]}</span>` : ""; };
+const jn = j => j ? `<button type="button" class="jl" data-pj="${j.id}" aria-label="Ver ficha de ${esc(j.nombre)}">${esc(j.nombre)}</button>${marcaBaja(J.get(j.id)||j)}` : "";
 let modalPrevio = null;
 function abrirJugador(id){
   const j=J.get(id); if(!j) return;
@@ -511,6 +521,7 @@ function abrirJugador(id){
       <div><div class="muted small">Partidos jugados</div><div class="big">${pj}</div></div>
       <div><div class="muted small">Minutos</div><div class="big">${min}</div></div>
       <div><div class="muted small">Media por partido jugado</div><div class="big">${pj?ptsHtml(tot/pj):"–"}</div></div></div>
+    ${j.baja?`<div class="aviso">${marcaBaja(j)} <strong>${BAJAS[j.baja][0]}</strong>${j.baja_info?`: ${esc(j.baja_info)}`:""}${j.baja_act?` <span class="muted small">(${esc(hace(j.baja_act))})</span>`:""}</div>`:""}
     <p class="small">${enEquipos.length?`Está en: ${enEquipos.map(esc).join(", ")}`:"No está en ningún equipo de la liga."}</p>
     <h3>Jornada a jornada</h3>
     ${ns.length?`<div class="scroll"><table><thead><tr><th>J</th><th class="num">Min</th><th class="num">Rating</th><th>Desglose</th><th class="num">Bruto</th><th class="num">Final</th></tr></thead><tbody>${filas}</tbody></table></div>
@@ -724,6 +735,7 @@ function vFichar(el){
     : `<div class="aviso">Ahora mismo no hay ninguna jornada abierta para fichar. Vuelve cuando el administrador cargue el calendario de la siguiente.</div>`;
   el.innerHTML=`<h2>Mi equipo</h2>
   ${plazo}
+  <p class="leyenda small muted"><span class="baja baja-lesion">+</span> lesionado · <span class="baja baja-duda">?</span> duda · <span class="baja baja-sancion"></span> sancionado <span class="muted">(según SofaScore para su próximo partido)</span></p>
   <p class="sub">Elige el sistema y rellena los 11 huecos: pulsa un hueco vacío para ver jugadores de esa posición, o arrastra un jugador desde la lista. Gasta al menos ${M(S.config.minimo)} y no repitas más de 3 de un mismo club.${base?` Puedes hacer hasta ${S.config.max_cambios} cambios por jornada.`:""}</p>
   <div class="fichar">
     <section class="col-campo">
@@ -767,7 +779,7 @@ function pintarLista(){
   box.innerHTML=l.map(j=>{
     const esta=sel.has(j.id), ocup=!esta&&ocupados.has(j.id), puede=esta||(libre[j.pos]&&!ocup);
     return `<div class="fila-j${puede&&!esta?" arrastrable":""}"${puede&&!esta?` draggable="true" data-drag="${j.id}"`:""}>${camiseta(j.equipo,24)}<span class="tag ${j.pos}">${j.pos}</span>
-    <span class="nom">${esc(j.nombre)} <span class="muted small">· ${esc(j.equipo)}</span></span><span class="num">${M(j.precio)} <span class="muted small">${fx(mult(j))}</span></span>
+    <span class="nom">${jn(j)} <span class="muted small">· ${esc(j.equipo)}</span></span><span class="num">${M(j.precio)} <span class="muted small">${fx(mult(j))}</span></span>
     <button class="mini ${esta?"peligro":"sec"}" data-id="${j.id}" ${puede?"":"disabled"} aria-label="${esta?"Quitar":"Fichar"} ${esc(j.nombre)}">${esta?"Quitar":ocup?"Ocupado":puede?"Fichar":"Lleno"}</button></div>`}).join("")
     +(total>200?`<p class="muted small" style="padding:8px 4px">Mostrando 200 de ${total}. Filtra para ver el resto.</p>`:"")
     +(!total?`<p class="muted small" style="padding:8px 4px">Ningún jugador coincide con el filtro.</p>`:"");
@@ -790,7 +802,7 @@ function pintarCampo(){
   const campo=document.getElementById("campo"); if(!campo) return;
   const F=FORMAS[borrador.formacion], g=porPos();
   const lleno=j=>`<div class="hueco lleno" data-pos="${posB(j)}"><button class="quitar" data-q="${j.id}" aria-label="Quitar a ${esc(j.nombre)}">×</button>${camiseta(j.equipo,34)}
-      <div class="fn">${esc(j.nombre)}</div><div class="fc">${M(j.precio)} · ${fx(mult(j))}</div></div>`;
+      <div class="fn">${jn(j)}</div><div class="fc">${M(j.precio)} · ${fx(mult(j))}</div></div>`;
   const libre=p=>`<button class="hueco libre${filtro.pos===p?" activo":""}" data-pos="${p}" aria-label="Elegir ${p}"><span class="mas">+</span><span>${p}</span></button>`;
   campo.innerHTML=["DEL","MED","DEF","POR"].map(p=>{
     const n=F[p], js=g[p].slice(0,n);
@@ -821,11 +833,13 @@ function pintarEstado(g,F){
   const err=v.err.filter(e=>!/^(POR|DEF|MED|DEL):/.test(e));
   if(sobran.length) err.unshift(`Sobran para ${borrador.formacion}: ${sobran.map(j=>j.nombre+" ("+posB(j)+")").join(", ")}. Quítalos o cambia de sistema.`);
   const nc = base ? cambios(base.ids, borrador.ids) : 0;
+  const conBaja = borrador.ids.map(i=>J.get(i)).filter(j=>j&&j.baja);
   if(base && nc>S.config.max_cambios) err.push(`Llevas ${nc} cambios respecto a tu equipo actual y el máximo es ${S.config.max_cambios}.`);
   const ok=!err.length && borrador.ids.length===11;
   const box=document.getElementById("estado-eq"); if(!box) return;
   const puedeGuardar = ok && o!==null && borrador.nombre.trim().length>=2 && borrador.manager.trim().length>=2;
   box.innerHTML=`${sobran.length?`<div class="sobra">${sobran.map(j=>`${esc(j.nombre)} <button class="mini sec" data-q="${j.id}">Quitar</button>`).join(" ")}</div>`:""}
+    ${conBaja.length?`<div class="aviso">Ojo: ${conBaja.map(j=>`${esc(j.nombre)} (${BAJAS[j.baja][0].toLowerCase()})`).join(", ")}. Si no juega, resta −8.</div>`:""}
     ${base?`<p class="small">Cambios: <strong>${nc}</strong> de ${S.config.max_cambios}</p>`:""}
     ${ok?'<p class="ok-msg">Equipo válido.</p>':`<ul class="errs">${err.map(e=>`<li>${esc(e)}</li>`).join("")}</ul>`}
     <div class="cols-nombres">
