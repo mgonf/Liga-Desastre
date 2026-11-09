@@ -395,6 +395,10 @@ const EN = {
 "Puntos por partido":"Points per match","No juega o no va convocado":"Doesn't play or not in squad","Juega menos de 30 min":"Plays under 30 min","Rating":"Rating",
 "Gol de defensa / medio / delantero o portero":"Goal by defender / midfielder / forward or keeper","Asistencia":"Assist","Portería a cero (POR/DEF, 60+ min)":"Clean sheet (GK/DEF, 60+ min)",
 "Gol en propia":"Own goal","Comete penalti":"Concedes a penalty","Falla penalti":"Misses a penalty",
+"Ocasión clara fallada":"Big chance missed","Error que acaba en gol del rival":"Error leading to an opposition goal","Ocasiones claras y errores":"Big chances and errors",
+"Según SofaScore, una ocasión clara es una jugada en la que lo normal sería marcar: solo ante el portero, un remate a bocajarro… Cada una que el jugador falla suma +3. Los penaltis fallados no cuentan aquí, porque ya suman +6 aparte.":"According to SofaScore, a big chance is a situation where a goal would normally be expected: one-on-one with the keeper, a shot from point-blank range… Each one the player misses scores +3. Missed penalties don't count here, since they already score +6 separately.",
+"Un error que acaba en gol es un fallo del propio jugador (un mal pase atrás, un balón que se le escapa al portero…) que termina en gol del rival. Suma +5.":"An error leading to a goal is the player's own mistake (a bad back-pass, a ball that slips through the keeper's hands…) that ends in an opposition goal. It scores +5.",
+"Ejemplo: un delantero falla dos ocasiones claras y un penalti: 2 × 3 + 6 = +12, además de lo que sume por rating y resultado.":"Example: a striker misses two big chances and a penalty: 2 × 3 + 6 = +12, on top of whatever he scores for rating and result.",
 "El rating es la nota que SofaScore pone a cada jugador en cada partido, de 3 a 10. Un 6,5 es un partido normal: no suma ni resta. Por cada punto por debajo de 6,5 sumas 3; por cada punto por encima, restas 3.":"The rating is the score SofaScore gives each player in each match, from 3 to 10. A 6.5 is an average game: it neither adds nor subtracts. Every point below 6.5 adds 3; every point above it takes away 3.",
 "Cuenta":"Calculation","5,0 (partido malo)":"5.0 (bad game)","6,0 (flojo)":"6.0 (poor)","6,5 (normal)":"6.5 (average)","7,5 (bueno)":"7.5 (good)","9,0 (partidazo)":"9.0 (outstanding)",
 "(6,5 − rating) × 3":"(6.5 − rating) × 3","(6,5 − 5,0) × 3":"(6.5 − 5.0) × 3","(6,5 − 6,0) × 3":"(6.5 − 6.0) × 3","(6,5 − 6,5) × 3":"(6.5 − 6.5) × 3","(6,5 − 7,5) × 3":"(6.5 − 7.5) × 3","(6,5 − 9,0) × 3":"(6.5 − 9.0) × 3",
@@ -435,7 +439,7 @@ const EN_RE = [
 [/^Tras (\d+) jornadas?\. Va primero quien más Puntos Desastre suma\.$/, (m,n)=>`After ${n} matchday${n==="1"?"":"s"}. Most Disaster Points goes first.`],
 [/^Jornada (\d+)$/, "Matchday $1"], [/^Desglose J(\d+)$/, "Breakdown MD$1"], [/^J(\d+)$/, "MD$1"],
 [/^Resultado \(E=([\d.]+), A=([\d.]+)\)$/, "Result (E=$1, A=$2)"], [/^Gol x(\d+)$/, "Goal x$1"], [/^Asistencia x(\d+)$/, "Assist x$1"],
-[/^Gol en propia x(\d+)$/, "Own goal x$1"], [/^Comete penalti x(\d+)$/, "Concedes penalty x$1"], [/^Falla penalti x(\d+)$/, "Missed penalty x$1"],
+[/^Gol en propia x(\d+)$/, "Own goal x$1"], [/^Comete penalti x(\d+)$/, "Concedes penalty x$1"], [/^Falla penalti x(\d+)$/, "Missed penalty x$1"], [/^Ocasión clara fallada x(\d+)$/, "Big chance missed x$1"], [/^Error que acaba en gol x(\d+)$/, "Error leading to goal x$1"],
 [/^Estrella (×.+)$/, "Star $1"], [/^Rating ([\d.,]+)$/, "Rating $1"],
 [/^Gana (.+)$/, "$1 win"], [/^Alineación ([\d-]+) de (.+)$/, "$2 $1 line-up"],
 [/^(.+) · (\d+) versi(ón|ones) · desde (.+)$/, (m,a,n,_,d)=>`${a} · ${n} version${n==="1"?"":"s"} · from ${d.replace(/J/g,"MD")}`],
@@ -1046,6 +1050,7 @@ function vReglas(el){
   ${fila("No juega o no va convocado","−8")}${fila("Juega menos de 30 min","−3")}${fila("Rating","(6,5 − rating) × 3")}
   ${fila("Gol de defensa / medio / delantero o portero","−6 / −5 / −4")}${fila("Asistencia","−3")}${fila("Portería a cero (POR/DEF, 60+ min)","−4")}
   ${fila("Gol en propia","+6")}${fila("Comete penalti","+5")}${fila("Falla penalti","+6")}
+  ${fila("Ocasión clara fallada","+3")}${fila("Error que acaba en gol del rival","+5")}
   ${fila("Amarilla","+2")}${fila("Doble amarilla","+5")}${fila("Roja directa","+7")}</tbody></table></div></div>
 
   <div class="panel" style="margin-top:16px"><h3>Modos de liga</h3>
@@ -1056,6 +1061,10 @@ function vReglas(el){
     <div class="modo${liga()&&S.config.exclusivo?" actual":""}"><p class="modo-t">Jugadores exclusivos${liga()&&S.config.exclusivo?' <span class="chip ok">tu liga</span>':""}</p>
       <ul class="small"><li>Cada jugador solo puede estar en un equipo de la liga: se lo queda el primero que guarda su alineación con él.</li><li>Cada jornada los equipos empiezan vacíos y hay que montarlos de nuevo antes del primer partido.</li><li>No hay límite de cambios.</li><li>Quien no guarde alineación suma −88, como si sus 11 jugadores no hubieran jugado.</li></ul></div>
   </div></div>
+  <div class="panel" style="margin-top:16px"><h3>Ocasiones claras y errores</h3>
+  <p class="small">Según SofaScore, una ocasión clara es una jugada en la que lo normal sería marcar: solo ante el portero, un remate a bocajarro… Cada una que el jugador falla suma +3. Los penaltis fallados no cuentan aquí, porque ya suman +6 aparte.</p>
+  <p class="small">Un error que acaba en gol es un fallo del propio jugador (un mal pase atrás, un balón que se le escapa al portero…) que termina en gol del rival. Suma +5.</p>
+  <p class="small muted">Ejemplo: un delantero falla dos ocasiones claras y un penalti: 2 × 3 + 6 = +12, además de lo que sume por rating y resultado.</p></div>
   <div class="panel" style="margin-top:16px"><h3>Rating</h3>
   <p class="small">El rating es la nota que SofaScore pone a cada jugador en cada partido, de 3 a 10. Un 6,5 es un partido normal: no suma ni resta. Por cada punto por debajo de 6,5 sumas 3; por cada punto por encima, restas 3.</p>
   <table class="tabla-ej"><thead><tr><th>Rating</th><th>Cuenta</th><th class="num">Puntos</th></tr></thead><tbody>
