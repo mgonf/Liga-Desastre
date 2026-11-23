@@ -210,6 +210,11 @@ a.eq-link:hover{border-bottom-style:solid}
 .cols-nombres{display:flex;flex-wrap:wrap;gap:0 12px}
 .cols-nombres .campo{flex:1 1 180px;min-width:0}
 .once-mini{max-width:640px}
+.onces{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:16px;margin-top:20px}
+.onces.uno{grid-template-columns:minmax(0,640px)}
+.once-caja .once{margin-bottom:6px;max-width:none}
+.once-cab{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.once-cab h3{margin:0}
 .ranking td{vertical-align:middle}
 .jug{display:flex;align-items:center;gap:8px;min-width:0}
 .jug .camiseta{margin:0}
@@ -542,6 +547,8 @@ Object.assign(EN, {
 "En las dos: no jugar resta −8, jugar menos de 30 minutos resta −3 y se aplica el multiplicador estrella.":"In both: not playing is −8, playing under 30 minutes is −3, and the star multiplier applies.",
 "Un defensa del Real Madrid que cuesta 60 M juega los 90 minutos contra el Elche. Ve una amarilla, da un mal pase atrás que acaba en gol y el Madrid pierde 0-1:":"A Real Madrid defender priced at 60M plays all 90 minutes against Elche. He gets a yellow card, plays a bad back-pass that leads to a goal, and Madrid lose 0-1:",
 "Error que acaba en gol":"Error leading to a goal","En la clásica, la amarilla y el error no suman aparte: ya le bajan la nota de SofaScore.":"In classic, the yellow card and the error don't count separately: they already lower his SofaScore rating.",
+"Equipo desastre de la temporada":"Season's disaster XI",
+"Los que más Puntos Desastre han dado en cada posición, con el multiplicador estrella ya aplicado. Se elige el sistema (4-4-2 o 4-3-3) que más suma.":"The players who gave the most Disaster Points in each position, star multiplier included. The formation (4-4-2 or 4-3-3) that adds up to more is chosen.",
 "Momentos desastre":"Disaster moments","· así se juega aquí":"· that's how we play here","Así se juega aquí.":"That's how we play here.","vacía":"empty",
 "Falla el penalti decisivo de la final del Mundial y lo manda por encima del larguero.":"Misses the deciding penalty of the World Cup final, blasting it over the bar.",
 "Dos errores clamorosos en la final de la Champions de Kiev ante el Real Madrid.":"Two howlers in the Champions League final in Kyiv against Real Madrid.",
@@ -565,6 +572,7 @@ Object.assign(EN, {
 "Ya has entrado":"You're logged in","admin":"admin","exclusiva":"exclusive","Ninguno.":"None."
 });
 EN_RE.push(
+ [/^Equipo desastre de la jornada (\d+)$/, "Matchday $1 disaster XI"],
  [/^Si ese mismo defensa hubiera hecho un buen partido \(rating 7,5\) y el Madrid ganara, sumaría (.+) en desastre total y (.+) en clásica, sin multiplicador porque sale negativo\.$/, "If the same defender had played well (rating 7.5) and Madrid won, he'd score $1 in total disaster and $2 in classic, with no multiplier because it's negative."],
  [/^Tu liga \((.+)\) usa la puntuación (clásica|desastre total)\.$/, (m,a,b)=>`Your league (${a}) uses ${b==="clásica"?"classic":"total disaster"} scoring.`],
  [/^Solo puedes hacer los cambios por jornada que marque la liga(?: \(en la tuya, (\d+)\))?\.$/, (m,n)=>"You can only make the changes per matchday the league allows"+(n?` (${n} in yours)`:"")+"."],
@@ -1028,19 +1036,24 @@ function vJornadas(el){
   if(rkF.pag>=npag) rkF.pag=npag-1;
   const ini=rkF.club?0:rkF.pag*POR_PAG;
   const filtrados=rkF.club?filtTodos:filtTodos.slice(ini,ini+POR_PAG);
-  // el once desastre: 4-4-2 con los mejores de cada posición (solo los que jugaron)
-  const jugaron=rkJ.filter(x=>x.pj>0);
-  const once={POR:1,DEF:4,MED:4,DEL:2};
-  const lineaO=p=>`<div class="linea">${jugaron.filter(x=>x.j.pos===p).slice(0,once[p]).map(x=>`<div class="ficha" title="${esc(x.j.nombre)} · ${esc(x.j.equipo)}">${camiseta(x.j.equipo,30)}<div class="fn">${jn(x.j)}</div><div class="fc">${esc(x.j.equipo)}</div><div class="fp ${x.tot>0?"pos":x.tot<0?"neg":""}">${x.tot>0?"+":""}${f1(x.tot)}</div></div>`).join("")}</div>`;
+  // el once desastre: los mejores de cada posición (solo los que jugaron), en 4-4-2 o 4-3-3, lo que sume más
+  const onceDe=rk=>{ const jug=rk.filter(x=>x.pj>0), por=p=>jug.filter(x=>x.j.pos===p);
+    const op=Object.entries(FORMAS).map(([f,o])=>{ const l={}; let t=0; POSS.forEach(p=>{l[p]=por(p).slice(0,o[p]); l[p].forEach(x=>t+=x.tot)}); return {f,l,t}; });
+    return op.sort((a,b)=>b.t-a.t)[0]; };
+  const onceHtml=(o,tit,id)=>`<div class="once-caja"><div class="once-cab"><h3>${tit}</h3><span class="small muted">${o.f} · ${ptsHtml(o.t)}</span></div>
+    <div class="once once-mini" role="img" aria-label="${esc(tit)}">${["DEL","MED","DEF","POR"].map(p=>lineaO(o.l[p])).join("")}</div></div>`;
+  const lineaO=lista=>`<div class="linea">${lista.map(x=>`<div class="ficha" title="${esc(x.j.nombre)} · ${esc(x.j.equipo)}">${camiseta(x.j.equipo,30)}<div class="fn">${jn(x.j)}</div><div class="fc">${esc(x.j.equipo)}</div><div class="fp ${x.tot>0?"pos":x.tot<0?"neg":""}">${x.tot>0?"+":""}${f1(x.tot)}</div></div>`).join("")}</div>`;
   const rkE=(todo||!liga())?[]:S.equipos.map(eq=>({eq,r:puntosEquipo(eq,jSel)})).filter(x=>x.r).sort((a,b)=>b.r.total-a.r.total);
   el.innerHTML=`<h2>${todo?"Toda la temporada":"Jornada "+jSel}</h2>
   <div class="filtros" style="max-width:260px"><select id="jsel" aria-label="Elegir jornada"><option value="all"${todo?" selected":""}>Toda la temporada</option>${ns.map(n=>`<option value="${n}"${n===jSel?" selected":""}>Jornada ${n}</option>`).join("")}</select></div>
   ${todo?"":(jor.avisos||[]).filter(a=>!/sin cuotas/.test(a)).map(a=>`<div class="aviso">${esc(a)}</div>`).join("")}
   ${todo?"":`<h3 style="margin-top:16px">Partidos</h3>
   <div class="partidos">${jor.partidos.map(p=>`<div class="partido"><div class="res"><span>${esc(p.local)} – ${esc(p.visitante)}</span><span>${p.goles_local!=null?p.goles_local+"-"+p.goles_visitante:esc(p.estado||"")}</span></div></div>`).join("")}</div>`}
-  <h3 style="margin-top:16px">El once desastre ${todo?"de la temporada":"de la jornada"}</h3>
-  <p class="small muted">Los que más Puntos Desastre han dado en cada posición, con el multiplicador estrella ya aplicado.</p>
-  <div class="once once-mini" role="img" aria-label="Once desastre">${["DEL","MED","DEF","POR"].map(lineaO).join("")}</div>
+  <div class="onces${todo?" uno":""}">
+    ${todo?"":onceHtml(onceDe(rkJ),"Equipo desastre de la jornada "+jSel)}
+    ${onceHtml(onceDe(todo?rkJ:rankingJugadores("all")),"Equipo desastre de la temporada")}
+  </div>
+  <p class="small muted">Los que más Puntos Desastre han dado en cada posición, con el multiplicador estrella ya aplicado. Se elige el sistema (4-4-2 o 4-3-3) que más suma.</p>
   <h3>Ranking de jugadores</h3>
   <div class="filtros" style="max-width:520px">
     <select id="rk-pos" aria-label="Posición"><option value="">Todas las posiciones</option>${POSS.map(p=>`<option value="${p}"${rkF.pos===p?" selected":""}>${p}</option>`).join("")}</select>
